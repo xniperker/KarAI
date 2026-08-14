@@ -62,7 +62,7 @@
             <div class="flex items-center space-x-4">
                 <button onclick="toggleCopilotDrawer()" class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-semibold transition-all">
                     <i data-lucide="bot" class="w-4 h-4 text-purple-400"></i>
-                    <span>Ask Tax Co-Pilot AI</span>
+                    <span>KarAI Chatbot</span>
                 </button>
                 <div class="flex items-center space-x-2 text-xs text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -327,13 +327,13 @@
 
     </main>
 
-    <!-- FLOATING COPILOT AI BUTTON -->
+    <!-- FLOATING CHATBOT BUTTON -->
     <button onclick="toggleCopilotDrawer()" class="fixed bottom-6 right-6 z-50 inline-flex items-center space-x-2 px-5 py-3 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white font-bold text-sm shadow-2xl shadow-purple-500/40 hover:scale-105 active:scale-95 transition-all">
         <i data-lucide="bot" class="w-5 h-5 animate-pulse"></i>
-        <span>KarAI Tax Co-Pilot AI</span>
+        <span>KarAI Chatbot</span>
     </button>
 
-    <!-- GENAI TAX COPILOT DRAWER -->
+    <!-- KARAI CHATBOT DRAWER -->
     <div id="copilotDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-slate-950/95 backdrop-blur-2xl border-l border-slate-800 shadow-2xl transition-transform duration-300 transform translate-x-full flex flex-col">
         <!-- Drawer Header -->
         <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
@@ -342,8 +342,8 @@
                     <i data-lucide="bot" class="w-5 h-5 text-purple-400"></i>
                 </div>
                 <div>
-                    <h3 class="text-sm font-bold text-white">KarAI Tax Co-Pilot AI</h3>
-                    <p class="text-[10px] text-purple-400">Context-Aware Tax Advisory Engine</p>
+                    <h3 class="text-sm font-bold text-white">KarAI Chatbot</h3>
+                    <p class="text-[10px] text-purple-400">Context-Aware Tax Engine</p>
                 </div>
             </div>
             <button onclick="toggleCopilotDrawer()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
@@ -355,17 +355,20 @@
         <div id="copilotChatContainer" class="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
             <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-2">
                 <p class="text-slate-200 leading-relaxed">
-                    👋 Namaste! I am your <strong>KarAI Tax Co-Pilot AI</strong>. Ask me anything about your GST compliance audit, legal tax regulations (CGST Act, Rule 36(4), Sec 40A(3)), or SHAP anomaly risk drivers.
+                    👋 Welcome! I am <strong>KarAI Chatbot</strong>. Reply with <strong>1, 2, 3, or 4</strong> or pick an option below:
                 </p>
                 <div class="pt-2 flex flex-wrap gap-2">
-                    <button onclick="sendQuickPrompt('Summarize my GST audit report')" class="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-[11px]">
-                        💡 Summarize Audit Report
+                    <button onclick="sendQuickPrompt('1')" class="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-[11px]">
+                        1. Summarize Audit Report
                     </button>
-                    <button onclick="sendQuickPrompt('How do I fix RULE-001 invalid GSTINs?')" class="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 text-[11px]">
-                        🔍 Explain RULE-001 (GSTIN)
+                    <button onclick="sendQuickPrompt('2')" class="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 text-[11px]">
+                        2. Explain RULE-001 (GSTIN)
                     </button>
-                    <button onclick="sendQuickPrompt('Why are round amounts flagged under Sec 40A(3)?')" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-[11px]">
-                        💵 Explain RULE-004 (Cash Risk)
+                    <button onclick="sendQuickPrompt('3')" class="px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-[11px]">
+                        3. Explain RULE-003 (HSN > 50k)
+                    </button>
+                    <button onclick="sendQuickPrompt('4')" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-[11px]">
+                        4. Explain RULE-004 (Cash Risk)
                     </button>
                 </div>
             </div>
@@ -374,7 +377,7 @@
         <!-- Chat Input Footer -->
         <div class="p-4 border-t border-slate-800 bg-slate-900/40">
             <form onsubmit="handleCopilotSubmit(event)" class="flex items-center space-x-2">
-                <input type="text" id="copilotInput" placeholder="Ask your tax question..." class="flex-1 bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-purple-500">
+                <input type="text" id="copilotInput" placeholder="Type 1, 2, 3, 4 or your question..." class="flex-1 bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-purple-500">
                 <button type="submit" class="p-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-all active:scale-95">
                     <i data-lucide="send" class="w-4 h-4"></i>
                 </button>
@@ -826,7 +829,7 @@
             }
         }
 
-        // GenAI Tax Co-Pilot Drawer Logic
+        // Chatbot Drawer Logic
         function toggleCopilotDrawer() {
             const drawer = document.getElementById("copilotDrawer");
             if(drawer.classList.contains("translate-x-full")) {
@@ -839,6 +842,16 @@
         async function sendQuickPrompt(promptText) {
             document.getElementById("copilotInput").value = promptText;
             handleCopilotSubmit(new Event('submit'));
+        }
+
+        function parseMarkdownToHtml(text) {
+            if(!text) return "";
+            let html = text;
+            // Convert **bold** to <b>bold</b>
+            html = html.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            // Convert `code` to <code>code</code>
+            html = html.replace(/`(.*?)`/g, '<code class="bg-slate-950 px-1 py-0.5 rounded text-amber-300">$1</code>');
+            return html;
         }
 
         async function handleCopilotSubmit(e) {
@@ -865,7 +878,7 @@
             chatBox.innerHTML += `
                 <div id="${loadingId}" class="flex items-center space-x-2 text-slate-400 italic">
                     <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-purple-400"></i>
-                    <span>KarAI Co-Pilot is reasoning...</span>
+                    <span>KarAI Chatbot is thinking...</span>
                 </div>
             `;
             lucide.createIcons();
@@ -884,7 +897,7 @@
 
                 document.getElementById(loadingId).remove();
 
-                const formattedReply = data.reply.replace(/\n/g, '<br/>');
+                const formattedReply = parseMarkdownToHtml(data.reply);
                 const actionChips = (data.suggested_actions || []).map(act => 
                     `<button onclick="sendQuickPrompt('${act}')" class="px-2 py-0.5 rounded-md bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-[10px]">${act}</button>`
                 ).join(' ');
@@ -899,7 +912,7 @@
 
             } catch(err) {
                 document.getElementById(loadingId).remove();
-                chatBox.innerHTML += `<div class="text-red-400 italic">Error connecting to Co-Pilot AI: ${err.message}</div>`;
+                chatBox.innerHTML += `<div class="text-red-400 italic">Error connecting to Chatbot: ${err.message}</div>`;
             }
         }
 

@@ -10,7 +10,7 @@ from app.db.session import get_db
 from app.db.models import User, Dataset, Transaction, ModelRun, AnomalyResult, ComplianceCheck, Violation
 from app.api.auth import get_current_user
 
-router = APIRouter(prefix="/copilot", tags=["GenAI Tax Co-Pilot"])
+router = APIRouter(prefix="/copilot", tags=["KarAI Chatbot"])
 
 class ChatRequest(BaseModel):
     message: str
@@ -20,7 +20,7 @@ class ChatResponse(BaseModel):
     reply: str
     suggested_actions: List[str]
 
-# Detailed Tax Regulations Context Knowledge Base
+# Detailed Tax Regulations Knowledge Base
 TAX_KNOWLEDGE_BASE = {
     "RULE-001": {
         "name": "Invalid GSTIN Standard Format",
@@ -43,21 +43,32 @@ TAX_KNOWLEDGE_BASE = {
     "RULE-004": {
         "name": "Round Amount Cash Payment Scrutiny",
         "section": "Section 40A(3) of Income Tax Act, 1961",
-        "advice": "Round payments (e.g. ₹5,00,000, ₹10,00,000) trigger cash payment scrutiny under Sec 40A(3) of IT Act. Payments exceeding ₹10,000 in cash per day are dis-allowed as business expenses.",
+        "advice": "Round payments (e.g. ₹5,00,000, ₹10,00,000) trigger cash payment scrutiny under Sec 40A(3) of IT Act. Payments exceeding ₹10,00,000 in cash per day are dis-allowed as business expenses.",
         "action": "Ensure banking channel proof (RTGS/NEFT/IMPS bank statements) is linked to the voucher for audit trails."
     }
 }
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_with_copilot(
+async def chat_with_chatbot(
     req: ChatRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    query = req.message.strip().lower()
+    raw_msg = req.message.strip()
+    query = raw_msg.lower()
     dataset_id = req.dataset_id
 
-    # If dataset_id is provided, fetch latest audit status to give context-aware AI advice
+    # Handle numeric input options (1, 2, 3, 4)
+    if query in ["1", "1.", "option 1", "opt 1"]:
+        query = "summarize"
+    elif query in ["2", "2.", "option 2", "opt 2"]:
+        query = "rule-001"
+    elif query in ["3", "3.", "option 3", "opt 3"]:
+        query = "rule-003"
+    elif query in ["4", "4.", "option 4", "opt 4"]:
+        query = "rule-004"
+
+    # Fetch dataset context if available
     cc = None
     top_anom = None
     if dataset_id:
@@ -84,14 +95,14 @@ async def chat_with_copilot(
             )
             top_anom = anom_res.scalars().first()
 
-    # Smart Generative Tax Co-Pilot Reasoning Logic
+    # Smart Reasoning Logic
     if "summarize" in query or "summary" in query or "report" in query or "overview" in query:
         if cc:
             reply = (
-                f"🤖 **KarAI Executive Audit Summary**:\n\n"
-                f"• **Compliance Score**: `{cc.compliance_score:.1f} / 100`\n"
-                f"• **Total Violations**: {cc.total_violations} breaches ({cc.critical_count} Critical, {cc.major_count} Major, {cc.minor_count} Minor).\n\n"
-                f"**Key Findings**: The primary risk factors stem from GSTIN validation errors (`RULE-001`) and missing HSN classification on high-value B2B transactions (`RULE-003`). "
+                f"🤖 <b>KarAI Executive Audit Summary</b>:<br/><br/>"
+                f"• <b>Compliance Score</b>: <code>{cc.compliance_score:.1f} / 100</code><br/>"
+                f"• <b>Total Violations</b>: {cc.total_violations} breaches ({cc.critical_count} Critical, {cc.major_count} Major, {cc.minor_count} Minor).<br/><br/>"
+                f"<b>Key Findings</b>: The primary risk factors stem from GSTIN validation errors (RULE-001) and missing HSN classification on high-value B2B transactions (RULE-003). "
                 f"Resolving the {cc.critical_count} critical breaches before GSTR-3B filing will raise your compliance score to ~95+."
             )
             actions = ["Export Audit PDF", "View Critical Violations", "Filter High-Risk Ledger"]
@@ -102,36 +113,36 @@ async def chat_with_copilot(
     elif "rule-001" in query or "gstin" in query or "invalid gstin" in query:
         kb = TAX_KNOWLEDGE_BASE["RULE-001"]
         reply = (
-            f"🤖 **GSTIN Regulatory Analysis ({kb['section']})**:\n\n"
-            f"{kb['advice']}\n\n"
-            f"💡 **Action Required**: {kb['action']}"
+            f"🤖 <b>GSTIN Regulatory Analysis ({kb['section']})</b>:<br/><br/>"
+            f"{kb['advice']}<br/><br/>"
+            f"💡 <b>Action Required</b>: {kb['action']}"
         )
         actions = ["Filter RULE-001 Breaches", "Verify GSTINs on GST Portal"]
 
     elif "rule-002" in query or "duplicate" in query:
         kb = TAX_KNOWLEDGE_BASE["RULE-002"]
         reply = (
-            f"🤖 **Duplicate Invoice Risk ({kb['section']})**:\n\n"
-            f"{kb['advice']}\n\n"
-            f"💡 **Action Required**: {kb['action']}"
+            f"🤖 <b>Duplicate Invoice Risk ({kb['section']})</b>:<br/><br/>"
+            f"{kb['advice']}<br/><br/>"
+            f"💡 <b>Action Required</b>: {kb['action']}"
         )
         actions = ["Filter Duplicate Invoices", "Issue Credit Note"]
 
     elif "rule-003" in query or "hsn" in query or "sac" in query or "50000" in query:
         kb = TAX_KNOWLEDGE_BASE["RULE-003"]
         reply = (
-            f"🤖 **HSN/SAC Classification Mandate ({kb['section']})**:\n\n"
-            f"{kb['advice']}\n\n"
-            f"💡 **Action Required**: {kb['action']}"
+            f"🤖 <b>HSN/SAC Classification Mandate ({kb['section']})</b>:<br/><br/>"
+            f"{kb['advice']}<br/><br/>"
+            f"💡 <b>Action Required</b>: {kb['action']}"
         )
         actions = ["Filter Missing HSN > ₹50k", "Look up HSN Master Table"]
 
     elif "rule-004" in query or "round" in query or "cash" in query or "40a" in query:
         kb = TAX_KNOWLEDGE_BASE["RULE-004"]
         reply = (
-            f"🤖 **Income Tax Act Sec 40A(3) Compliance ({kb['section']})**:\n\n"
-            f"{kb['advice']}\n\n"
-            f"💡 **Action Required**: {kb['action']}"
+            f"🤖 <b>Income Tax Act Sec 40A(3) Compliance ({kb['section']})</b>:<br/><br/>"
+            f"{kb['advice']}<br/><br/>"
+            f"💡 <b>Action Required</b>: {kb['action']}"
         )
         actions = ["Attach Bank Statements", "Review High Round Transactions"]
 
@@ -139,11 +150,11 @@ async def chat_with_copilot(
         if top_anom and top_anom.transaction:
             t = top_anom.transaction
             reply = (
-                f"🤖 **Deep Analysis for High-Risk Transaction `{t.transaction_id}`**:\n\n"
-                f"• **Party**: {t.party_name}\n"
-                f"• **Amount**: ₹{t.amount:,.2f}\n"
-                f"• **ML Anomaly Score**: `{top_anom.anomaly_score:.4f}` ({top_anom.risk_category.upper()})\n"
-                f"• **SHAP XAI Feature Drivers**: The primary reasons for flagging were **amount deviation (+{top_anom.shap_values.get('amount_deviation', 0):.3f})** and **Z-score (+{top_anom.shap_values.get('amount_zscore', 0):.3f})** relative to party history."
+                f"🤖 <b>Deep Analysis for High-Risk Transaction <code>{t.transaction_id}</code></b>:<br/><br/>"
+                f"• <b>Party</b>: {t.party_name}<br/>"
+                f"• <b>Amount</b>: ₹{t.amount:,.2f}<br/>"
+                f"• <b>ML Anomaly Score</b>: <code>{top_anom.anomaly_score:.4f}</code> ({top_anom.risk_category.upper()})<br/>"
+                f"• <b>SHAP XAI Feature Drivers</b>: The primary reasons for flagging were amount deviation (+{top_anom.shap_values.get('amount_deviation', 0):.3f}) and Z-score (+{top_anom.shap_values.get('amount_zscore', 0):.3f}) relative to party history."
             )
             actions = ["Inspect SHAP XAI Breakdown", "Export Full Excel Ledger"]
         else:
@@ -152,14 +163,13 @@ async def chat_with_copilot(
 
     else:
         reply = (
-            f"🤖 **KarAI Tax Advisory Co-Pilot**:\n\n"
-            f"I analyzed your request: *'{req.message}'*.\n\n"
-            f"I can assist you with:\n"
-            f"1. **Summarizing your overall GST audit report**\n"
-            f"2. **Explaining legal tax sections (CGST Sec 25, Rule 36(4), IT Sec 40A(3))**\n"
-            f"3. **Investigating specific transaction IDs and SHAP feature drivers**\n"
-            f"4. **Providing CA-level remediation advice for flagged violations**"
+            f"🤖 <b>KarAI Chatbot</b>:<br/><br/>"
+            f"I can assist you with the following options (reply with <b>1, 2, 3, or 4</b>):<br/><br/>"
+            f"<b>1.</b> Summarize your overall GST audit report<br/>"
+            f"<b>2.</b> Explain RULE-001 (GSTIN Sec 25 compliance)<br/>"
+            f"<b>3.</b> Explain RULE-003 (HSN/SAC mandate > ₹50,000)<br/>"
+            f"<b>4.</b> Explain RULE-004 (Cash payment risk Sec 40A(3))"
         )
-        actions = ["Summarize Audit Report", "Explain RULE-001 (GSTIN)", "Explain RULE-003 (HSN > 50k)"]
+        actions = ["1", "2", "3", "4"]
 
     return ChatResponse(reply=reply, suggested_actions=actions)
