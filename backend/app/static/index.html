@@ -384,18 +384,12 @@
 
         async function initAuth() {
             try {
-                await fetch(`${API_BASE}/auth/register`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: "demo.user@karai.io", password: "Password123!", role: "sme_user" })
-                });
-            } catch(e){}
-
-            try {
+                const formData = new FormData();
+                formData.append("username", "test@karai.io");
+                formData.append("password", "1234");
                 const res = await fetch(`${API_BASE}/auth/login`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: "demo.user@karai.io", password: "Password123!" })
+                    body: formData
                 });
                 const data = await res.json();
                 if(data.access_token) {

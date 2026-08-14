@@ -1,15 +1,15 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import Optional, List, Any, Dict
 from datetime import datetime
 
 # Auth Schemas
 class UserRegister(BaseModel):
-    email: EmailStr
-    password: str = Field(..., min_length=8)
+    email: str
+    password: str = Field(..., min_length=1)  # Flexible length for simple testing (e.g. 1234)
     role: str = "sme_user"  # admin, consultant, sme_user
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class Token(BaseModel):
@@ -118,7 +118,7 @@ class DashboardSummary(BaseModel):
     total_transactions: int
     flagged_count: int
     compliance_score: float
-    overall_risk_level: str  # Low, Medium, High, Critical
+    overall_risk_level: str
     risk_distribution: Dict[str, int]
     top_anomalies: List[Dict[str, Any]]
     recent_violations: List[Dict[str, Any]]
