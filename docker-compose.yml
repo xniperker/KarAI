@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  karai-api:
+    build: .
+    container_name: karai-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////app/karai.db
+      - JWT_SECRET_KEY=super_secret_karai_jwt_key_32_bytes_long_hash_string_2026
+    volumes:
+      - ./datasets:/app/datasets
+      - ./reports_storage:/app/reports_storage
+    restart: always
+
+  karai-admin:
+    build: .
+    container_name: karai-admin
+    command: python -m streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONPATH=/app/backend
+    volumes:
+      - ./datasets:/app/datasets
+      - ./reports_storage:/app/reports_storage
+    depends_on:
+      - karai-api
+    restart: always

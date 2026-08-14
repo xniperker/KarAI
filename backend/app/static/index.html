@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KarAI — Automated Tax Compliance & Anomaly Detection</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Plotly.js CDN -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0B0F17;
+            color: #F1F5F9;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
+        .glass-panel-hover:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.15);
+        }
+        .bg-glow-blue {
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(11, 15, 23, 0) 70%);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0F172A;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased bg-glow-blue selection:bg-blue-600 selection:text-white">
+
+    <!-- TOP NAV BAR -->
+    <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 p-[1px] shadow-lg shadow-blue-500/20">
+                    <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
+                        <i data-lucide="shield-alert" class="w-5 h-5 text-blue-400"></i>
+                    </div>
+                </div>
+                <div>
+                    <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">KarAI</span>
+                    <span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">v1.0 Minor Project</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 text-xs text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>FastAPI Core: <strong class="text-slate-200">Online</strong></span>
+                </div>
+                <div class="text-xs text-slate-400 border-l border-slate-800 pl-4">
+                    MAIT Delhi — <span class="text-slate-300 font-medium">CSE (Data Science)</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <!-- HERO / INGESTION ACTION BAR -->
+        <section class="glass-panel rounded-2xl p-6 relative overflow-hidden">
+            <div class="absolute -right-20 -top-20 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">
+                <div class="space-y-2 max-w-2xl">
+                    <h1 class="text-2xl font-bold text-white tracking-tight">Automated Tax Compliance & Anomaly Audit Platform</h1>
+                    <p class="text-sm text-slate-400 leading-relaxed">
+                        Upload financial ledgers to perform unsupervised ML anomaly detection (Isolation Forest), per-prediction SHAP explainability, and GST rule compliance validation.
+                    </p>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-3">
+                    <button id="loadSampleBtn" onclick="loadSampleDataset()" class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition-all shadow-lg shadow-blue-600/25 active:scale-95">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        <span>Run Demo (500 Txns)</span>
+                    </button>
+                    
+                    <label class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm border border-slate-700 cursor-pointer transition-all active:scale-95">
+                        <i data-lucide="upload-cloud" class="w-4 h-4 text-blue-400"></i>
+                        <span>Upload Custom CSV</span>
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="uploadCustomCSV(this.files[0])">
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI SUMMARY CARDS -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- Total Transactions -->
+            <div class="glass-panel glass-panel-hover rounded-2xl p-5 transition-all">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Scored Ledger</span>
+                    <div class="p-2 rounded-xl bg-blue-500/10 text-blue-400">
+                        <i data-lucide="database" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div id="kpiTotalTxns" class="text-3xl font-extrabold text-white">0</div>
+                    <p class="text-xs text-slate-400 mt-1">Ingested B2B & B2C records</p>
+                </div>
+            </div>
+
+            <!-- Compliance Score -->
+            <div class="glass-panel glass-panel-hover rounded-2xl p-5 transition-all">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">GST Compliance Score</span>
+                    <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-baseline space-x-2">
+                    <div id="kpiCompScore" class="text-3xl font-extrabold text-emerald-400">100.0</div>
+                    <span class="text-xs text-slate-400">/ 100</span>
+                </div>
+                <p id="kpiCompSub" class="text-xs text-slate-400 mt-1">No regulatory breaches</p>
+            </div>
+
+            <!-- Flagged Anomalies -->
+            <div class="glass-panel glass-panel-hover rounded-2xl p-5 transition-all">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Flagged ML Anomalies</span>
+                    <div class="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div id="kpiFlagged" class="text-3xl font-extrabold text-amber-400">0</div>
+                    <p class="text-xs text-slate-400 mt-1">Deviations (IF Score &gt; 0.30)</p>
+                </div>
+            </div>
+
+            <!-- Overall Risk Level -->
+            <div class="glass-panel glass-panel-hover rounded-2xl p-5 transition-all">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">System Risk Evaluation</span>
+                    <div class="p-2 rounded-xl bg-red-500/10 text-red-400">
+                        <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div id="kpiRiskLevel" class="text-3xl font-extrabold text-white">Low</div>
+                    <p class="text-xs text-slate-400 mt-1">Audit status classification</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHARTS SECTION -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Anomaly Scatter Plot -->
+            <div class="glass-panel rounded-2xl p-5 lg:col-span-2 flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-white">ML Anomaly Distribution (Score vs Amount)</h2>
+                        <p class="text-xs text-slate-400">Isolation Forest score mapping against transaction values (₹)</p>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-mono">16 Features</span>
+                </div>
+                <div id="scatterPlot" class="w-full h-80 flex-1 min-h-[320px]"></div>
+            </div>
+
+            <!-- Risk Distribution Breakdown -->
+            <div class="glass-panel rounded-2xl p-5 flex flex-col">
+                <div class="mb-4">
+                    <h2 class="text-base font-bold text-white">Risk Category Breakdown</h2>
+                    <p class="text-xs text-slate-400">Continuous classification metrics</p>
+                </div>
+                <div id="pieChart" class="w-full h-80 flex-1 min-h-[320px]"></div>
+            </div>
+        </section>
+
+        <!-- GST RULE COMPLIANCE AUDIT SECTION -->
+        <section class="glass-panel rounded-2xl p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i data-lucide="file-check-2" class="w-5 h-5 text-blue-400"></i>
+                        <span>GST Regulatory Compliance Violations</span>
+                    </h2>
+                    <p class="text-xs text-slate-400">Automated evaluation against RULE-001 to RULE-006</p>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <button onclick="downloadReport('pdf')" class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 transition-all">
+                        <i data-lucide="file-text" class="w-4 h-4 text-red-400"></i>
+                        <span>Export Audit PDF</span>
+                    </button>
+                    <button onclick="downloadReport('excel')" class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 transition-all">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Export Excel Ledger</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-800">
+                        <tr>
+                            <th class="py-3 px-4">Rule Code</th>
+                            <th class="py-3 px-4">Severity</th>
+                            <th class="py-3 px-4">Violation Details</th>
+                            <th class="py-3 px-4">CA Remediation Guidance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="violationsTableBody" class="divide-y divide-slate-800/60">
+                        <tr>
+                            <td colspan="4" class="py-8 text-center text-slate-500">Run analysis or load demo dataset to view GST compliance violations.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- TOP ANOMALIES & SHAP EXPLAINABILITY TABLE -->
+        <section class="glass-panel rounded-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i data-lucide="brain-circuit" class="w-5 h-5 text-purple-400"></i>
+                        <span>High-Risk Transaction Ledger & SHAP XAI Explainer</span>
+                    </h2>
+                    <p class="text-xs text-slate-400">Ranked by continuous Isolation Forest score [0.0000 – 1.0000]</p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-800">
+                        <tr>
+                            <th class="py-3 px-4">Txn ID</th>
+                            <th class="py-3 px-4">Amount (₹)</th>
+                            <th class="py-3 px-4">Party Name</th>
+                            <th class="py-3 px-4">GSTIN</th>
+                            <th class="py-3 px-4">Anomaly Score</th>
+                            <th class="py-3 px-4">Risk Badge</th>
+                            <th class="py-3 px-4 text-right">Explainability</th>
+                        </tr>
+                    </thead>
+                    <tbody id="anomaliesTableBody" class="divide-y divide-slate-800/60">
+                        <tr>
+                            <td colspan="7" class="py-8 text-center text-slate-500">No anomalies loaded yet. Click "Run Demo" above.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- SHAP EXPLAINER MODAL -->
+    <div id="shapModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl max-w-xl w-full p-6 space-y-5 border border-slate-700 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
+                    <h3 class="text-base font-bold text-white">SHAP Feature Importance Breakdown</h3>
+                </div>
+                <button onclick="closeShapModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex items-center justify-between text-xs bg-slate-900 p-3 rounded-xl border border-slate-800">
+                    <div>
+                        <span class="text-slate-400">Target Txn ID:</span>
+                        <strong id="shapModalTxnId" class="text-white ml-1 font-mono">TXN-00000</strong>
+                    </div>
+                    <div>
+                        <span class="text-slate-400">Anomaly Score:</span>
+                        <strong id="shapModalScore" class="text-amber-400 ml-1 font-mono">0.0000</strong>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-400">
+                    Top feature contributions computed via <strong>SHAP TreeExplainer</strong> showing directional contribution towards anomaly risk:
+                </p>
+
+                <div id="shapBarsContainer" class="space-y-2.5 pt-2">
+                    <!-- Dynamic Bars injected here -->
+                </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800 flex justify-end">
+                <button onclick="closeShapModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white rounded-xl">
+                    Close Explanation
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const API_BASE = "/api/v1";
+        let jwtToken = "";
+        let currentDatasetId = "";
+
+        // Auto-register / login demo user on startup
+        async function initAuth() {
+            try {
+                // Try register demo user
+                await fetch(`${API_BASE}/auth/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: "demo.user@karai.io", password: "Password123!", role: "sme_user" })
+                });
+            } catch(e){}
+
+            try {
+                // Login
+                const res = await fetch(`${API_BASE}/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: "demo.user@karai.io", password: "Password123!" })
+                });
+                const data = await res.json();
+                if(data.access_token) {
+                    jwtToken = data.access_token;
+                }
+            } catch(e) {
+                console.error("Auth init error:", e);
+            }
+        }
+
+        async function loadSampleDataset() {
+            const btn = document.getElementById("loadSampleBtn");
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Analyzing...</span>`;
+            lucide.createIcons();
+
+            if(!jwtToken) await initAuth();
+
+            try {
+                // 1. Trigger sample dataset upload (fetch from python generated file or server endpoint)
+                const resFetch = await fetch('/datasets/sample_gst_transactions_500.csv');
+                let blob;
+                if(resFetch.ok) {
+                    blob = await resFetch.blob();
+                } else {
+                    // Fallback create minimal CSV in memory
+                    const fallbackCsv = "transaction_id,txn_date,amount,party_name,gstin,category,invoice_number\nTXN-001,2025-01-15,500000.0,Global Enterprises,07INVALIDGSTIN,HSN 8471,INV/001";
+                    blob = new Blob([fallbackCsv], { type: 'text/csv' });
+                }
+
+                const formData = new FormData();
+                formData.append("file", blob, "sample_gst_transactions_500.csv");
+                formData.append("filing_period", "2025-Q1");
+
+                const resUp = await fetch(`${API_BASE}/datasets/upload`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${jwtToken}` },
+                    body: formData
+                });
+                const dsData = await resUp.json();
+                currentDatasetId = dsData.id;
+
+                // 2. Run ML Analysis
+                await fetch(`${API_BASE}/analysis/run?dataset_id=${currentDatasetId}&contamination=0.05`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${jwtToken}` }
+                });
+
+                // 3. Run Compliance Check
+                await fetch(`${API_BASE}/compliance/check?dataset_id=${currentDatasetId}&filing_period=2025-Q1`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${jwtToken}` }
+                });
+
+                // 4. Refresh Dashboard
+                await refreshDashboard();
+
+            } catch(err) {
+                alert("Error running analysis pipeline: " + err.message);
+            } finally {
+                btn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i><span>Run Demo (500 Txns)</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        async function uploadCustomCSV(file) {
+            if(!file) return;
+            if(!jwtToken) await initAuth();
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("filing_period", "2025-Q1");
+
+            try {
+                const resUp = await fetch(`${API_BASE}/datasets/upload`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${jwtToken}` },
+                    body: formData
+                });
+                const dsData = await resUp.json();
+                currentDatasetId = dsData.id;
+
+                await fetch(`${API_BASE}/analysis/run?dataset_id=${currentDatasetId}&contamination=0.05`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${jwtToken}` }
+                });
+
+                await fetch(`${API_BASE}/compliance/check?dataset_id=${currentDatasetId}&filing_period=2025-Q1`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${jwtToken}` }
+                });
+
+                await refreshDashboard();
+            } catch(err) {
+                alert("Failed to process custom CSV: " + err.message);
+            }
+        }
+
+        async function refreshDashboard() {
+            if(!currentDatasetId) return;
+
+            // Fetch Summary
+            const resSummary = await fetch(`${API_BASE}/dashboard/summary?dataset_id=${currentDatasetId}`, {
+                headers: { "Authorization": `Bearer ${jwtToken}` }
+            });
+            const summary = await resSummary.json();
+
+            // Update KPIs
+            document.getElementById("kpiTotalTxns").innerText = summary.total_transactions.toLocaleString();
+            document.getElementById("kpiCompScore").innerText = summary.compliance_score.toFixed(1);
+            document.getElementById("kpiFlagged").innerText = summary.flagged_count.toLocaleString();
+            
+            const rLevelEl = document.getElementById("kpiRiskLevel");
+            rLevelEl.innerText = summary.overall_risk_level;
+            if(summary.overall_risk_level === "Critical") rLevelEl.className = "text-3xl font-extrabold text-red-500";
+            else if(summary.overall_risk_level === "High") rLevelEl.className = "text-3xl font-extrabold text-amber-500";
+            else rLevelEl.className = "text-3xl font-extrabold text-emerald-400";
+
+            // Update Violations Table
+            const vTable = document.getElementById("violationsTableBody");
+            if(summary.recent_violations && summary.recent_violations.length > 0) {
+                vTable.innerHTML = summary.recent_violations.map(v => {
+                    const badgeClass = v.severity === 'critical' ? 'bg-red-500/10 text-red-400 border-red-500/20' : v.severity === 'major' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+                    return `
+                        <tr class="hover:bg-slate-900/50 transition-colors">
+                            <td class="py-3 px-4 font-mono font-bold text-blue-400">${v.rule}</td>
+                            <td class="py-3 px-4"><span class="px-2 py-0.5 text-[10px] font-bold rounded-md border ${badgeClass}">${v.severity.toUpperCase()}</span></td>
+                            <td class="py-3 px-4 text-slate-300 max-w-xs">${v.description}</td>
+                            <td class="py-3 px-4 text-slate-400 italic max-w-xs">${v.remediation}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                vTable.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-emerald-400 font-medium">✓ Zero GST Compliance Violations Detected</td></tr>`;
+            }
+
+            // Update Top Anomalies Table
+            const aTable = document.getElementById("anomaliesTableBody");
+            if(summary.top_anomalies && summary.top_anomalies.length > 0) {
+                aTable.innerHTML = summary.top_anomalies.map(a => {
+                    const rClass = a.risk === 'critical' ? 'text-red-400 bg-red-500/10 border-red-500/20' : a.risk === 'high_risk' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+                    const shapJson = JSON.stringify(a.shap_values).replace(/"/g, '&quot;');
+                    return `
+                        <tr class="hover:bg-slate-900/50 transition-colors">
+                            <td class="py-3 px-4 font-mono font-semibold text-white">${a.txn_id}</td>
+                            <td class="py-3 px-4 font-semibold text-slate-200">₹${a.amount.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                            <td class="py-3 px-4 text-slate-300">${a.party_name}</td>
+                            <td class="py-3 px-4 font-mono text-slate-400">${a.gstin || 'N/A'}</td>
+                            <td class="py-3 px-4 font-mono font-bold text-amber-400">${a.score.toFixed(4)}</td>
+                            <td class="py-3 px-4"><span class="px-2 py-0.5 text-[10px] font-bold rounded-md border ${rClass}">${a.risk.toUpperCase()}</span></td>
+                            <td class="py-3 px-4 text-right">
+                                <button onclick="openShapModal('${a.txn_id}', ${a.score}, '${shapJson}')" class="px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 text-[11px] font-medium transition-all">
+                                    SHAP XAI
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                aTable.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No high-risk anomalies detected.</td></tr>`;
+            }
+
+            // Fetch Scatter Plot Data
+            const resScatter = await fetch(`${API_BASE}/dashboard/scatter?dataset_id=${currentDatasetId}`, {
+                headers: { "Authorization": `Bearer ${jwtToken}` }
+            });
+            const scatterPoints = await resScatter.json();
+            renderScatterPlot(scatterPoints);
+            renderPieChart(summary.risk_distribution);
+        }
+
+        function renderScatterPlot(points) {
+            if(!points || points.length === 0) return;
+            const xVal = points.map(p => p.amount);
+            const yVal = points.map(p => p.score);
+            const textVal = points.map(p => `${p.txn_id} - ${p.party} (₹${p.amount.toLocaleString()})`);
+            const colorsVal = points.map(p => p.risk === 'critical' ? '#EF4444' : p.risk === 'high_risk' ? '#F59E0B' : p.risk === 'suspicious' ? '#3B82F6' : '#10B981');
+
+            const trace = {
+                x: xVal,
+                y: yVal,
+                text: textVal,
+                mode: 'markers',
+                type: 'scatter',
+                marker: {
+                    size: 8,
+                    color: colorsVal,
+                    opacity: 0.8
+                }
+            };
+
+            const layout = {
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                margin: { l: 40, r: 20, t: 10, b: 40 },
+                xaxis: { title: 'Transaction Amount (₹)', color: '#94A3B8', gridcolor: '#1E293B', type: 'log' },
+                yaxis: { title: 'Anomaly Score (0 - 1)', color: '#94A3B8', gridcolor: '#1E293B', range: [0, 1.05] },
+                font: { family: 'Plus Jakarta Sans', color: '#94A3B8' }
+            };
+
+            Plotly.newPlot('scatterPlot', [trace], layout, { responsive: true, displayModeBar: false });
+        }
+
+        function renderPieChart(dist) {
+            const labels = ['Normal', 'Suspicious', 'High Risk', 'Critical'];
+            const values = [dist.normal || 0, dist.suspicious || 0, dist.high_risk || 0, dist.critical || 0];
+            const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'];
+
+            const trace = {
+                labels: labels,
+                values: values,
+                type: 'pie',
+                hole: 0.6,
+                marker: { colors: colors },
+                textinfo: 'percent',
+                insidetextorientation: 'radial'
+            };
+
+            const layout = {
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                margin: { l: 20, r: 20, t: 10, b: 20 },
+                showlegend: true,
+                legend: { orientation: 'h', font: { color: '#94A3B8', size: 10 } },
+                font: { family: 'Plus Jakarta Sans', color: '#94A3B8' }
+            };
+
+            Plotly.newPlot('pieChart', [trace], layout, { responsive: true, displayModeBar: false });
+        }
+
+        function openShapModal(txnId, score, shapJsonStr) {
+            document.getElementById("shapModalTxnId").innerText = txnId;
+            document.getElementById("shapModalScore").innerText = score.toFixed(4);
+            
+            let shapData = {};
+            try {
+                shapData = JSON.parse(shapJsonStr.replace(/&quot;/g, '"'));
+            } catch(e){}
+
+            const container = document.getElementById("shapBarsContainer");
+            const keys = Object.keys(shapData);
+            
+            if(keys.length === 0) {
+                container.innerHTML = `<div class="text-xs text-slate-500 py-4 text-center">No SHAP breakdown available for this record.</div>`;
+            } else {
+                container.innerHTML = keys.map(k => {
+                    const val = shapData[k];
+                    const isPos = val >= 0;
+                    const widthPct = Math.min(100, Math.abs(val) * 100).toFixed(0);
+                    const colorClass = isPos ? 'bg-red-500' : 'bg-emerald-500';
+                    return `
+                        <div>
+                            <div class="flex justify-between text-xs font-mono mb-1">
+                                <span class="text-slate-300">${k}</span>
+                                <span class="${isPos ? 'text-red-400' : 'text-emerald-400'}">${isPos ? '+' : ''}${val.toFixed(3)}</span>
+                            </div>
+                            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                                <div class="${colorClass} h-full rounded-full transition-all duration-500" style="width: ${widthPct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById("shapModal").classList.remove("hidden");
+            document.getElementById("shapModal").classList.add("flex");
+        }
+
+        function closeShapModal() {
+            document.getElementById("shapModal").classList.remove("flex");
+            document.getElementById("shapModal").classList.add("hidden");
+        }
+
+        async function downloadReport(type) {
+            if(!currentDatasetId) {
+                alert("Please run demo or upload dataset first.");
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/reports/generate?dataset_id=${currentDatasetId}&report_type=${type}`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${jwtToken}` }
+                });
+                const repData = await res.json();
+                
+                // Trigger download
+                window.open(`${API_BASE}/reports/${repData.id}/download`, '_blank');
+            } catch(e) {
+                alert("Error generating report: " + e.message);
+            }
+        }
+
+        // Initialize icons & auth on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initAuth();
+        });
+    </script>
+</body>
+</html>
