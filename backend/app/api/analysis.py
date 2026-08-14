@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy import func
 from app.db.session import get_db
 from app.db.models import User, Dataset, Transaction, ModelRun, AnomalyResult
 from app.db.schemas import ModelRunOut, AnomalyResultOut
@@ -97,23 +98,78 @@ async def get_model_run_status(
         raise HTTPException(status_code=404, detail="Model run not found.")
     return mr
 
-@router.get("/runs/{run_id}/results", response_model=List[AnomalyResultOut])
-async def get_model_run_results(
-    run_id: str,
+@router.get("/dataset/{dataset_id}/latest-results")
+async def get_dataset_latest_results(
+    dataset_id: str,
     risk_category: Optional[str] = None,
-    limit: int = 100,
-    offset: int = 0,
+    search: Optional[str] = None,
+    page: int = 1,
+    limit: int = 25,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    # Find latest completed model run for dataset
+    mr_res = await db.execute(
+        select(ModelRun)
+        .where(ModelRun.dataset_id == dataset_id, ModelRun.status == "completed")
+        .order_by(ModelRun.run_timestamp.desc())
+    )
+    mr = mr_res.scalars().first()
+    if not mr:
+        return {"items": [], "total": 0, "page": page, "pages": 0}
+
     query = (
         select(AnomalyResult)
+        .join(Transaction)
         .options(selectinload(AnomalyResult.transaction))
-        .where(AnomalyResult.model_run_id == run_id)
+        .where(AnomalyResult.model_run_id == mr.id)
     )
-    if risk_category:
+
+    if risk_category and risk_category != "all":
         query = query.where(AnomalyResult.risk_category == risk_category)
-        
-    query = query.order_by(AnomalyResult.anomaly_score.desc()).limit(limit).offset(offset)
-    result = await db.execute(query)
-    return result.scalars().all()
+
+    if search:
+        search_fmt = f"%{search}%"
+        query = query.where(
+            (Transaction.transaction_id.ilike(search_fmt)) |
+            (Transaction.party_name.ilike(search_fmt)) |
+            (Transaction.gstin.ilike(search_fmt))
+        )
+
+    # Count total matching
+    count_query = select(func.count()).select_from(query.subquery())
+    total_res = await db.execute(count_query)
+    total = total_res.scalar() or 0
+
+    # Paginate
+    offset = (page - 1) * limit
+    query = query.order_by(AnomalyResult.anomaly_score.desc()).offset(offset).limit(limit)
+    res = await db.execute(query)
+    anomalies = res.scalars().all()
+
+    items = []
+    for a in anomalies:
+        if a.transaction:
+            items.append({
+                "id": a.id,
+                "txn_id": a.transaction.transaction_id,
+                "amount": a.transaction.amount,
+                "party_name": a.transaction.party_name,
+                "gstin": a.transaction.gstin,
+                "category": a.transaction.category,
+                "invoice_number": a.transaction.invoice_number,
+                "score": a.anomaly_score,
+                "risk": a.risk_category,
+                "shap_values": a.shap_values or {}
+            })
+
+    import math
+    pages = math.ceil(total / limit) if total > 0 else 0
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": pages
+    }

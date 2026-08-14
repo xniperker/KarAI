@@ -29,7 +29,6 @@
         .bg-glow-blue {
             background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(11, 15, 23, 0) 70%);
         }
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -63,7 +62,7 @@
             <div class="flex items-center space-x-4">
                 <div class="flex items-center space-x-2 text-xs text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>FastAPI Core: <strong class="text-slate-200">Online</strong></span>
+                    <span>FastAPI Engine: <strong class="text-slate-200">Online</strong></span>
                 </div>
                 <div class="text-xs text-slate-400 border-l border-slate-800 pl-4">
                     MAIT Delhi — <span class="text-slate-300 font-medium">CSE (Data Science)</span>
@@ -187,78 +186,140 @@
         </section>
 
         <!-- GST RULE COMPLIANCE AUDIT SECTION -->
-        <section class="glass-panel rounded-2xl p-6 space-y-4">
+        <section class="glass-panel rounded-2xl p-6 space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800 pb-4">
                 <div>
                     <h2 class="text-lg font-bold text-white flex items-center gap-2">
                         <i data-lucide="file-check-2" class="w-5 h-5 text-blue-400"></i>
                         <span>GST Regulatory Compliance Violations</span>
                     </h2>
-                    <p class="text-xs text-slate-400">Automated evaluation against RULE-001 to RULE-006</p>
+                    <p class="text-xs text-slate-400">Automated evaluation against RULE-001 to RULE-006 across dataset</p>
                 </div>
                 
                 <div class="flex items-center gap-3">
-                    <button onclick="downloadReport('pdf')" class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 transition-all">
+                    <button onclick="downloadReport('pdf')" class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 transition-all active:scale-95">
                         <i data-lucide="file-text" class="w-4 h-4 text-red-400"></i>
                         <span>Export Audit PDF</span>
                     </button>
-                    <button onclick="downloadReport('excel')" class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 transition-all">
+                    <button onclick="downloadReport('excel')" class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 transition-all active:scale-95">
                         <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
                         <span>Export Excel Ledger</span>
                     </button>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-300">
-                    <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-800">
-                        <tr>
-                            <th class="py-3 px-4">Rule Code</th>
-                            <th class="py-3 px-4">Severity</th>
-                            <th class="py-3 px-4">Violation Details</th>
-                            <th class="py-3 px-4">CA Remediation Guidance</th>
-                        </tr>
-                    </thead>
-                    <tbody id="violationsTableBody" class="divide-y divide-slate-800/60">
-                        <tr>
-                            <td colspan="4" class="py-8 text-center text-slate-500">Run analysis or load demo dataset to view GST compliance violations.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- TOP ANOMALIES & SHAP EXPLAINABILITY TABLE -->
-        <section class="glass-panel rounded-2xl p-6 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-                <div>
-                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i data-lucide="brain-circuit" class="w-5 h-5 text-purple-400"></i>
-                        <span>High-Risk Transaction Ledger & SHAP XAI Explainer</span>
-                    </h2>
-                    <p class="text-xs text-slate-400">Ranked by continuous Isolation Forest score [0.0000 – 1.0000]</p>
+            <!-- RULE AGGREGATION CARDS -->
+            <div id="ruleAggCards" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 text-center">
+                    No compliance data loaded yet. Run demo above.
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <!-- VIOLATIONS LIST & PAGINATION -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between gap-4 flex-wrap">
+                    <div class="text-xs font-semibold text-slate-300">
+                        Detailed Affected Transactions List (<span id="violTotalCount">0</span> breaches)
+                    </div>
+                    
+                    <div class="flex items-center space-x-3 text-xs">
+                        <select id="violSeverityFilter" onchange="loadViolationsPage(1)" class="bg-slate-900 text-slate-200 border border-slate-700 rounded-lg px-2.5 py-1 text-xs">
+                            <option value="all">All Severities</option>
+                            <option value="critical">Critical Only</option>
+                            <option value="major">Major Only</option>
+                            <option value="minor">Minor Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-800">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-800">
+                            <tr>
+                                <th class="py-3 px-4">Rule Code</th>
+                                <th class="py-3 px-4">Severity</th>
+                                <th class="py-3 px-4">Affected Txn ID</th>
+                                <th class="py-3 px-4">Party & Amount</th>
+                                <th class="py-3 px-4">Violation Details</th>
+                                <th class="py-3 px-4">CA Remediation Guidance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="violationsTableBody" class="divide-y divide-slate-800/60">
+                            <tr>
+                                <td colspan="6" class="py-8 text-center text-slate-500">Run analysis to view detailed violation records.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Violations Pagination Controls -->
+                <div class="flex items-center justify-between text-xs text-slate-400 pt-2">
+                    <div id="violPaginationInfo">Page 0 of 0</div>
+                    <div class="flex items-center space-x-2">
+                        <button id="violPrevBtn" onclick="changeViolPage(-1)" class="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">Previous</button>
+                        <button id="violNextBtn" onclick="changeViolPage(1)" class="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FULL HIGH-RISK TRANSACTION LEDGER & SHAP EXPLAINABILITY -->
+        <section class="glass-panel rounded-2xl p-6 space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i data-lucide="brain-circuit" class="w-5 h-5 text-purple-400"></i>
+                        <span>Full Transaction Ledger & SHAP XAI Explainer</span>
+                    </h2>
+                    <p class="text-xs text-slate-400">Ranked by continuous Isolation Forest score [0.0000 – 1.0000]. Filter or scroll through full dataset.</p>
+                </div>
+
+                <!-- Search & Filters -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5"></i>
+                        <input type="text" id="anomSearchInput" oninput="debounceSearchAnomalies()" placeholder="Search Txn ID, Party..." class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl pl-9 pr-3 py-1.5 focus:outline-none focus:border-blue-500 w-48">
+                    </div>
+
+                    <select id="anomRiskFilter" onchange="loadAnomaliesPage(1)" class="bg-slate-900 text-slate-200 border border-slate-700 rounded-xl px-3 py-1.5 text-xs">
+                        <option value="all">All Risk Levels</option>
+                        <option value="critical">Critical (&gt;0.85)</option>
+                        <option value="high_risk">High Risk (0.60 - 0.85)</option>
+                        <option value="suspicious">Suspicious (0.30 - 0.60)</option>
+                        <option value="normal">Normal (&lt;0.30)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-800">
                 <table class="w-full text-left text-xs text-slate-300">
-                    <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-800">
+                    <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-800">
                         <tr>
                             <th class="py-3 px-4">Txn ID</th>
+                            <th class="py-3 px-4">Txn Date</th>
                             <th class="py-3 px-4">Amount (₹)</th>
                             <th class="py-3 px-4">Party Name</th>
                             <th class="py-3 px-4">GSTIN</th>
                             <th class="py-3 px-4">Anomaly Score</th>
-                            <th class="py-3 px-4">Risk Badge</th>
+                            <th class="py-3 px-4">Risk Category</th>
                             <th class="py-3 px-4 text-right">Explainability</th>
                         </tr>
                     </thead>
                     <tbody id="anomaliesTableBody" class="divide-y divide-slate-800/60">
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-500">No anomalies loaded yet. Click "Run Demo" above.</td>
+                            <td colspan="8" class="py-8 text-center text-slate-500">No anomalies loaded yet. Click "Run Demo" above.</td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Ledger Pagination Controls -->
+            <div class="flex items-center justify-between text-xs text-slate-400 pt-2">
+                <div id="anomPaginationInfo">Showing 0 of 0 transactions</div>
+                <div class="flex items-center space-x-2">
+                    <button id="anomPrevBtn" onclick="changeAnomPage(-1)" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">Previous</button>
+                    <button id="anomNextBtn" onclick="changeAnomPage(1)" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
+                </div>
             </div>
         </section>
 
@@ -312,10 +373,16 @@
         let jwtToken = "";
         let currentDatasetId = "";
 
-        // Auto-register / login demo user on startup
+        // Pagination state
+        let violCurrentPage = 1;
+        let violTotalPages = 1;
+
+        let anomCurrentPage = 1;
+        let anomTotalPages = 1;
+        let searchTimeout = null;
+
         async function initAuth() {
             try {
-                // Try register demo user
                 await fetch(`${API_BASE}/auth/register`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -324,7 +391,6 @@
             } catch(e){}
 
             try {
-                // Login
                 const res = await fetch(`${API_BASE}/auth/login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -347,13 +413,11 @@
             if(!jwtToken) await initAuth();
 
             try {
-                // 1. Trigger sample dataset upload (fetch from python generated file or server endpoint)
                 const resFetch = await fetch('/datasets/sample_gst_transactions_500.csv');
                 let blob;
                 if(resFetch.ok) {
                     blob = await resFetch.blob();
                 } else {
-                    // Fallback create minimal CSV in memory
                     const fallbackCsv = "transaction_id,txn_date,amount,party_name,gstin,category,invoice_number\nTXN-001,2025-01-15,500000.0,Global Enterprises,07INVALIDGSTIN,HSN 8471,INV/001";
                     blob = new Blob([fallbackCsv], { type: 'text/csv' });
                 }
@@ -370,19 +434,16 @@
                 const dsData = await resUp.json();
                 currentDatasetId = dsData.id;
 
-                // 2. Run ML Analysis
                 await fetch(`${API_BASE}/analysis/run?dataset_id=${currentDatasetId}&contamination=0.05`, {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${jwtToken}` }
                 });
 
-                // 3. Run Compliance Check
                 await fetch(`${API_BASE}/compliance/check?dataset_id=${currentDatasetId}&filing_period=2025-Q1`, {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${jwtToken}` }
                 });
 
-                // 4. Refresh Dashboard
                 await refreshDashboard();
 
             } catch(err) {
@@ -429,13 +490,12 @@
         async function refreshDashboard() {
             if(!currentDatasetId) return;
 
-            // Fetch Summary
+            // 1. Fetch Summary for KPIs & Charts
             const resSummary = await fetch(`${API_BASE}/dashboard/summary?dataset_id=${currentDatasetId}`, {
                 headers: { "Authorization": `Bearer ${jwtToken}` }
             });
             const summary = await resSummary.json();
 
-            // Update KPIs
             document.getElementById("kpiTotalTxns").innerText = summary.total_transactions.toLocaleString();
             document.getElementById("kpiCompScore").innerText = summary.compliance_score.toFixed(1);
             document.getElementById("kpiFlagged").innerText = summary.flagged_count.toLocaleString();
@@ -446,33 +506,110 @@
             else if(summary.overall_risk_level === "High") rLevelEl.className = "text-3xl font-extrabold text-amber-500";
             else rLevelEl.className = "text-3xl font-extrabold text-emerald-400";
 
-            // Update Violations Table
+            // Scatter & Pie Charts
+            const resScatter = await fetch(`${API_BASE}/dashboard/scatter?dataset_id=${currentDatasetId}`, {
+                headers: { "Authorization": `Bearer ${jwtToken}` }
+            });
+            const scatterPoints = await resScatter.json();
+            renderScatterPlot(scatterPoints);
+            renderPieChart(summary.risk_distribution);
+
+            // 2. Load Paginated Violations & Summaries
+            await loadViolationsPage(1);
+
+            // 3. Load Paginated Transaction Ledger
+            await loadAnomaliesPage(1);
+        }
+
+        async function loadViolationsPage(page) {
+            if(!currentDatasetId) return;
+            violCurrentPage = page;
+
+            const sevFilter = document.getElementById("violSeverityFilter").value;
+            const res = await fetch(`${API_BASE}/compliance/dataset/${currentDatasetId}/summary?severity=${sevFilter}&page=${page}&limit=10`, {
+                headers: { "Authorization": `Bearer ${jwtToken}` }
+            });
+            const compSummary = await res.json();
+
+            // Render Aggregation Rule Cards
+            const ruleCardsEl = document.getElementById("ruleAggCards");
+            if(compSummary.rule_summaries && compSummary.rule_summaries.length > 0) {
+                ruleCardsEl.innerHTML = compSummary.rule_summaries.map(r => {
+                    const badgeColor = r.severity === 'critical' ? 'text-red-400 bg-red-500/10 border-red-500/20' : r.severity === 'major' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+                    return `
+                        <div class="glass-panel p-4 rounded-xl space-y-2 border border-slate-800">
+                            <div class="flex items-center justify-between">
+                                <span class="font-mono font-bold text-sm text-blue-400">${r.rule_code}</span>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-md border ${badgeColor}">${r.severity.toUpperCase()}</span>
+                            </div>
+                            <div class="text-2xl font-extrabold text-white">
+                                ${r.affected_count} <span class="text-xs font-normal text-slate-400">transactions affected</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 line-clamp-2">${r.sample_description}</p>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                ruleCardsEl.innerHTML = `<div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-medium text-center md:col-span-3">✓ Zero GST Compliance Violations Detected</div>`;
+            }
+
+            // Render Detailed Violations Table
+            document.getElementById("violTotalCount").innerText = compSummary.total.toLocaleString();
             const vTable = document.getElementById("violationsTableBody");
-            if(summary.recent_violations && summary.recent_violations.length > 0) {
-                vTable.innerHTML = summary.recent_violations.map(v => {
+            if(compSummary.items && compSummary.items.length > 0) {
+                vTable.innerHTML = compSummary.items.map(v => {
                     const badgeClass = v.severity === 'critical' ? 'bg-red-500/10 text-red-400 border-red-500/20' : v.severity === 'major' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+                    const txnInfo = v.transaction ? `<strong class="text-white">${v.transaction.txn_id}</strong><br/>₹${v.transaction.amount.toLocaleString()} | ${v.transaction.party_name}` : 'Dataset-level';
                     return `
                         <tr class="hover:bg-slate-900/50 transition-colors">
-                            <td class="py-3 px-4 font-mono font-bold text-blue-400">${v.rule}</td>
+                            <td class="py-3 px-4 font-mono font-bold text-blue-400">${v.rule_code}</td>
                             <td class="py-3 px-4"><span class="px-2 py-0.5 text-[10px] font-bold rounded-md border ${badgeClass}">${v.severity.toUpperCase()}</span></td>
+                            <td class="py-3 px-4 font-mono text-slate-300">${v.transaction ? v.transaction.txn_id : 'N/A'}</td>
+                            <td class="py-3 px-4 text-slate-300">${v.transaction ? `${v.transaction.party_name} (₹${v.transaction.amount.toLocaleString()})` : 'N/A'}</td>
                             <td class="py-3 px-4 text-slate-300 max-w-xs">${v.description}</td>
                             <td class="py-3 px-4 text-slate-400 italic max-w-xs">${v.remediation}</td>
                         </tr>
                     `;
                 }).join('');
             } else {
-                vTable.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-emerald-400 font-medium">✓ Zero GST Compliance Violations Detected</td></tr>`;
+                vTable.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No violations match current filter.</td></tr>`;
             }
 
-            // Update Top Anomalies Table
+            // Pagination Controls
+            violTotalPages = compSummary.pages || 1;
+            document.getElementById("violPaginationInfo").innerText = `Page ${compSummary.page} of ${violTotalPages} (${compSummary.total} total items)`;
+            document.getElementById("violPrevBtn").disabled = compSummary.page <= 1;
+            document.getElementById("violNextBtn").disabled = compSummary.page >= violTotalPages;
+        }
+
+        function changeViolPage(delta) {
+            const target = violCurrentPage + delta;
+            if(target >= 1 && target <= violTotalPages) {
+                loadViolationsPage(target);
+            }
+        }
+
+        async function loadAnomaliesPage(page) {
+            if(!currentDatasetId) return;
+            anomCurrentPage = page;
+
+            const riskFilter = document.getElementById("anomRiskFilter").value;
+            const searchVal = document.getElementById("anomSearchInput").value;
+
+            const res = await fetch(`${API_BASE}/analysis/dataset/${currentDatasetId}/latest-results?risk_category=${riskFilter}&search=${encodeURIComponent(searchVal)}&page=${page}&limit=15`, {
+                headers: { "Authorization": `Bearer ${jwtToken}` }
+            });
+            const data = await res.json();
+
             const aTable = document.getElementById("anomaliesTableBody");
-            if(summary.top_anomalies && summary.top_anomalies.length > 0) {
-                aTable.innerHTML = summary.top_anomalies.map(a => {
-                    const rClass = a.risk === 'critical' ? 'text-red-400 bg-red-500/10 border-red-500/20' : a.risk === 'high_risk' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+            if(data.items && data.items.length > 0) {
+                aTable.innerHTML = data.items.map(a => {
+                    const rClass = a.risk === 'critical' ? 'text-red-400 bg-red-500/10 border-red-500/20' : a.risk === 'high_risk' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : a.risk === 'suspicious' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
                     const shapJson = JSON.stringify(a.shap_values).replace(/"/g, '&quot;');
                     return `
                         <tr class="hover:bg-slate-900/50 transition-colors">
                             <td class="py-3 px-4 font-mono font-semibold text-white">${a.txn_id}</td>
+                            <td class="py-3 px-4 text-slate-400">${a.category || 'N/A'}</td>
                             <td class="py-3 px-4 font-semibold text-slate-200">₹${a.amount.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
                             <td class="py-3 px-4 text-slate-300">${a.party_name}</td>
                             <td class="py-3 px-4 font-mono text-slate-400">${a.gstin || 'N/A'}</td>
@@ -487,16 +624,27 @@
                     `;
                 }).join('');
             } else {
-                aTable.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No high-risk anomalies detected.</td></tr>`;
+                aTable.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-500">No ledger records match current query.</td></tr>`;
             }
 
-            // Fetch Scatter Plot Data
-            const resScatter = await fetch(`${API_BASE}/dashboard/scatter?dataset_id=${currentDatasetId}`, {
-                headers: { "Authorization": `Bearer ${jwtToken}` }
-            });
-            const scatterPoints = await resScatter.json();
-            renderScatterPlot(scatterPoints);
-            renderPieChart(summary.risk_distribution);
+            anomTotalPages = data.pages || 1;
+            document.getElementById("anomPaginationInfo").innerText = `Showing ${data.items.length} of ${data.total} transactions (Page ${data.page} of ${anomTotalPages})`;
+            document.getElementById("anomPrevBtn").disabled = data.page <= 1;
+            document.getElementById("anomNextBtn").disabled = data.page >= anomTotalPages;
+        }
+
+        function changeAnomPage(delta) {
+            const target = anomCurrentPage + delta;
+            if(target >= 1 && target <= anomTotalPages) {
+                loadAnomaliesPage(target);
+            }
+        }
+
+        function debounceSearchAnomalies() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadAnomaliesPage(1);
+            }, 300);
         }
 
         function renderScatterPlot(points) {
@@ -613,14 +761,31 @@
                 });
                 const repData = await res.json();
                 
-                // Trigger download
-                window.open(`${API_BASE}/reports/${repData.id}/download`, '_blank');
+                // Fetch report binary file blob using Bearer Token header to prevent 401
+                const resFile = await fetch(`${API_BASE}/reports/${repData.id}/download`, {
+                    headers: { "Authorization": `Bearer ${jwtToken}` }
+                });
+                
+                if(!resFile.ok) {
+                    alert("Failed to download report file.");
+                    return;
+                }
+
+                const blob = await resFile.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = type === 'excel' ? `KarAI_Audit_Ledger_${currentDatasetId.slice(0,8)}.xlsx` : `KarAI_Compliance_Audit_Report_${currentDatasetId.slice(0,8)}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(blobUrl);
+
             } catch(e) {
                 alert("Error generating report: " + e.message);
             }
         }
 
-        // Initialize icons & auth on page load
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             initAuth();

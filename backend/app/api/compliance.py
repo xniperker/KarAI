@@ -1,9 +1,10 @@
 import pandas as pd
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy import func
 from app.db.session import get_db
 from app.db.models import User, Dataset, Transaction, ComplianceCheck, Violation
 from app.db.schemas import ComplianceCheckOut
@@ -90,18 +91,114 @@ async def run_compliance_check(
     )
     return res_final.scalars().first()
 
-@router.get("/{check_id}", response_model=ComplianceCheckOut)
-async def get_compliance_check(
-    check_id: str,
+@router.get("/dataset/{dataset_id}/summary")
+async def get_compliance_summary_by_dataset(
+    dataset_id: str,
+    severity: Optional[str] = None,
+    page: int = 1,
+    limit: int = 15,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    res = await db.execute(
+    # Fetch latest compliance check for dataset
+    cc_res = await db.execute(
         select(ComplianceCheck)
-        .options(selectinload(ComplianceCheck.violations))
-        .where(ComplianceCheck.id == check_id)
+        .where(ComplianceCheck.dataset_id == dataset_id)
+        .order_by(ComplianceCheck.checked_at.desc())
     )
-    cc = res.scalars().first()
+    cc = cc_res.scalars().first()
     if not cc:
-        raise HTTPException(status_code=404, detail="Compliance check not found.")
-    return cc
+        return {
+            "compliance_score": 100.0,
+            "total_violations": 0,
+            "critical_count": 0,
+            "major_count": 0,
+            "minor_count": 0,
+            "rule_summaries": [],
+            "items": [],
+            "total": 0,
+            "page": page,
+            "pages": 0
+        }
+
+    # Aggregate violations count per Rule Code across entire dataset
+    rule_agg_query = (
+        select(
+            Violation.violation_type,
+            Violation.severity,
+            func.count(Violation.id).label("affected_txns"),
+            Violation.description,
+            Violation.remediation
+        )
+        .where(Violation.compliance_check_id == cc.id)
+        .group_by(Violation.violation_type, Violation.severity)
+    )
+    rule_res = await db.execute(rule_agg_query)
+    rule_rows = rule_res.all()
+
+    rule_summaries = []
+    for r in rule_rows:
+        rule_summaries.append({
+            "rule_code": r[0],
+            "severity": r[1],
+            "affected_count": r[2],
+            "sample_description": r[3],
+            "remediation": r[4]
+        })
+
+    # Detailed Violations Query
+    v_query = (
+        select(Violation)
+        .join(Transaction, isouter=True)
+        .options(selectinload(Violation.transaction))
+        .where(Violation.compliance_check_id == cc.id)
+    )
+
+    if severity and severity != "all":
+        v_query = v_query.where(Violation.severity == severity)
+
+    # Count total matching
+    count_query = select(func.count()).select_from(v_query.subquery())
+    total_res = await db.execute(count_query)
+    total_matching = total_res.scalar() or 0
+
+    offset = (page - 1) * limit
+    v_query = v_query.offset(offset).limit(limit)
+    v_res = await db.execute(v_query)
+    violations = v_res.scalars().all()
+
+    items = []
+    for v in violations:
+        txn_info = None
+        if v.transaction:
+            txn_info = {
+                "txn_id": v.transaction.transaction_id,
+                "amount": v.transaction.amount,
+                "party_name": v.transaction.party_name,
+                "gstin": v.transaction.gstin
+            }
+        items.append({
+            "id": v.id,
+            "rule_code": v.violation_type,
+            "severity": v.severity,
+            "description": v.description,
+            "remediation": v.remediation,
+            "transaction": txn_info
+        })
+
+    import math
+    pages = math.ceil(total_matching / limit) if total_matching > 0 else 0
+
+    return {
+        "compliance_score": cc.compliance_score,
+        "total_violations": cc.total_violations,
+        "critical_count": cc.critical_count,
+        "major_count": cc.major_count,
+        "minor_count": cc.minor_count,
+        "rule_summaries": rule_summaries,
+        "items": items,
+        "total": total_matching,
+        "page": page,
+        "limit": limit,
+        "pages": pages
+    }
