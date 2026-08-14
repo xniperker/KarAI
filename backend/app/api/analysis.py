@@ -108,7 +108,6 @@ async def get_dataset_latest_results(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    # Find latest completed model run for dataset
     mr_res = await db.execute(
         select(ModelRun)
         .where(ModelRun.dataset_id == dataset_id, ModelRun.status == "completed")
@@ -133,15 +132,14 @@ async def get_dataset_latest_results(
         query = query.where(
             (Transaction.transaction_id.ilike(search_fmt)) |
             (Transaction.party_name.ilike(search_fmt)) |
-            (Transaction.gstin.ilike(search_fmt))
+            (Transaction.gstin.ilike(search_fmt)) |
+            (Transaction.category.ilike(search_fmt))
         )
 
-    # Count total matching
     count_query = select(func.count()).select_from(query.subquery())
     total_res = await db.execute(count_query)
     total = total_res.scalar() or 0
 
-    # Paginate
     offset = (page - 1) * limit
     query = query.order_by(AnomalyResult.anomaly_score.desc()).offset(offset).limit(limit)
     res = await db.execute(query)
@@ -153,6 +151,7 @@ async def get_dataset_latest_results(
             items.append({
                 "id": a.id,
                 "txn_id": a.transaction.transaction_id,
+                "txn_date": a.transaction.txn_date,
                 "amount": a.transaction.amount,
                 "party_name": a.transaction.party_name,
                 "gstin": a.transaction.gstin,

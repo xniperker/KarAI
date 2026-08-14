@@ -297,6 +297,7 @@
                         <tr>
                             <th class="py-3 px-4">Txn ID</th>
                             <th class="py-3 px-4">Txn Date</th>
+                            <th class="py-3 px-4">HSN / SAC Code</th>
                             <th class="py-3 px-4">Amount (₹)</th>
                             <th class="py-3 px-4">Party Name</th>
                             <th class="py-3 px-4">GSTIN</th>
@@ -307,7 +308,7 @@
                     </thead>
                     <tbody id="anomaliesTableBody" class="divide-y divide-slate-800/60">
                         <tr>
-                            <td colspan="8" class="py-8 text-center text-slate-500">No anomalies loaded yet. Click "Run Demo" above.</td>
+                            <td colspan="9" class="py-8 text-center text-slate-500">No anomalies loaded yet. Click "Run Demo" above.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -559,7 +560,6 @@
             if(compSummary.items && compSummary.items.length > 0) {
                 vTable.innerHTML = compSummary.items.map(v => {
                     const badgeClass = v.severity === 'critical' ? 'bg-red-500/10 text-red-400 border-red-500/20' : v.severity === 'major' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-                    const txnInfo = v.transaction ? `<strong class="text-white">${v.transaction.txn_id}</strong><br/>₹${v.transaction.amount.toLocaleString()} | ${v.transaction.party_name}` : 'Dataset-level';
                     return `
                         <tr class="hover:bg-slate-900/50 transition-colors">
                             <td class="py-3 px-4 font-mono font-bold text-blue-400">${v.rule_code}</td>
@@ -609,7 +609,8 @@
                     return `
                         <tr class="hover:bg-slate-900/50 transition-colors">
                             <td class="py-3 px-4 font-mono font-semibold text-white">${a.txn_id}</td>
-                            <td class="py-3 px-4 text-slate-400">${a.category || 'N/A'}</td>
+                            <td class="py-3 px-4 font-mono text-slate-300">${a.txn_date || 'N/A'}</td>
+                            <td class="py-3 px-4 font-mono text-blue-400">${a.category || 'N/A'}</td>
                             <td class="py-3 px-4 font-semibold text-slate-200">₹${a.amount.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
                             <td class="py-3 px-4 text-slate-300">${a.party_name}</td>
                             <td class="py-3 px-4 font-mono text-slate-400">${a.gstin || 'N/A'}</td>
@@ -624,7 +625,7 @@
                     `;
                 }).join('');
             } else {
-                aTable.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-500">No ledger records match current query.</td></tr>`;
+                aTable.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-slate-500">No ledger records match current query.</td></tr>`;
             }
 
             anomTotalPages = data.pages || 1;
@@ -761,7 +762,6 @@
                 });
                 const repData = await res.json();
                 
-                // Fetch report binary file blob using Bearer Token header to prevent 401
                 const resFile = await fetch(`${API_BASE}/reports/${repData.id}/download`, {
                     headers: { "Authorization": `Bearer ${jwtToken}` }
                 });
