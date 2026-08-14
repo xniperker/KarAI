@@ -187,7 +187,7 @@
         </section>
 
         <!-- GST RULE COMPLIANCE AUDIT SECTION -->
-        <section class="glass-panel rounded-2xl p-6 space-y-6">
+        <section id="violationsSection" class="glass-panel rounded-2xl p-6 space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800 pb-4">
                 <div>
                     <h2 class="text-lg font-bold text-white flex items-center gap-2">
@@ -265,7 +265,7 @@
         </section>
 
         <!-- FULL HIGH-RISK TRANSACTION LEDGER & SHAP EXPLAINABILITY -->
-        <section class="glass-panel rounded-2xl p-6 space-y-4">
+        <section id="ledgerSection" class="glass-panel rounded-2xl p-6 space-y-4">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-4">
                 <div>
                     <h2 class="text-lg font-bold text-white flex items-center gap-2">
@@ -343,7 +343,7 @@
                 </div>
                 <div>
                     <h3 class="text-sm font-bold text-white">KarAI Chatbot</h3>
-                    <p class="text-[10px] text-purple-400">Context-Aware Tax Engine</p>
+                    <p class="text-[10px] text-purple-400">Context-Aware Tax Advisory Engine</p>
                 </div>
             </div>
             <button onclick="toggleCopilotDrawer()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
@@ -355,20 +355,23 @@
         <div id="copilotChatContainer" class="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
             <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-2">
                 <p class="text-slate-200 leading-relaxed">
-                    👋 Welcome! I am <strong>KarAI Chatbot</strong>. Reply with <strong>1, 2, 3, or 4</strong> or pick an option below:
+                    👋 Welcome! I am <strong>KarAI Chatbot</strong>. Type <strong>1, 2, 3, 4, or 5</strong> or pick an option below:
                 </p>
                 <div class="pt-2 flex flex-wrap gap-2">
                     <button onclick="sendQuickPrompt('1')" class="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-[11px]">
-                        1. Summarize Audit Report
+                        1. Executive Audit Summary
                     </button>
                     <button onclick="sendQuickPrompt('2')" class="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 text-[11px]">
-                        2. Explain RULE-001 (GSTIN)
+                        2. Explain Any Tax Rule
                     </button>
                     <button onclick="sendQuickPrompt('3')" class="px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-[11px]">
-                        3. Explain RULE-003 (HSN > 50k)
+                        3. Investigate High-Risk Txn
                     </button>
                     <button onclick="sendQuickPrompt('4')" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-[11px]">
-                        4. Explain RULE-004 (Cash Risk)
+                        4. CA Remediation Advice
+                    </button>
+                    <button onclick="sendQuickPrompt('5')" class="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 text-[11px]">
+                        5. Export Reports & Filter
                     </button>
                 </div>
             </div>
@@ -377,7 +380,7 @@
         <!-- Chat Input Footer -->
         <div class="p-4 border-t border-slate-800 bg-slate-900/40">
             <form onsubmit="handleCopilotSubmit(event)" class="flex items-center space-x-2">
-                <input type="text" id="copilotInput" placeholder="Type 1, 2, 3, 4 or your question..." class="flex-1 bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-purple-500">
+                <input type="text" id="copilotInput" placeholder="Type 1, 2, 3, 4, 5 or any tax question..." class="flex-1 bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-purple-500">
                 <button type="submit" class="p-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-all active:scale-95">
                     <i data-lucide="send" class="w-4 h-4"></i>
                 </button>
@@ -839,6 +842,47 @@
             }
         }
 
+        function handleActionClick(actionText) {
+            const lower = actionText.toLowerCase();
+
+            // Direct Interactive Actions
+            if(lower.includes("export audit pdf")) {
+                downloadReport('pdf');
+                return;
+            }
+            if(lower.includes("export excel ledger")) {
+                downloadReport('excel');
+                return;
+            }
+            if(lower.includes("filter high-risk ledger")) {
+                document.getElementById("anomRiskFilter").value = "high_risk";
+                loadAnomaliesPage(1);
+                document.getElementById("ledgerSection").scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+            if(lower.includes("view critical violations")) {
+                document.getElementById("violSeverityFilter").value = "critical";
+                loadViolationsPage(1);
+                document.getElementById("violationsSection").scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+            if(lower.includes("run demo dataset")) {
+                loadSampleDataset();
+                return;
+            }
+            if(lower.includes("upload csv file")) {
+                document.getElementById("csvFileInput").click();
+                return;
+            }
+            if(lower.includes("inspect shap xai breakdown")) {
+                document.getElementById("ledgerSection").scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            // Otherwise send prompt text to Chatbot
+            sendQuickPrompt(actionText);
+        }
+
         async function sendQuickPrompt(promptText) {
             document.getElementById("copilotInput").value = promptText;
             handleCopilotSubmit(new Event('submit'));
@@ -847,9 +891,7 @@
         function parseMarkdownToHtml(text) {
             if(!text) return "";
             let html = text;
-            // Convert **bold** to <b>bold</b>
             html = html.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-            // Convert `code` to <code>code</code>
             html = html.replace(/`(.*?)`/g, '<code class="bg-slate-950 px-1 py-0.5 rounded text-amber-300">$1</code>');
             return html;
         }
@@ -899,13 +941,13 @@
 
                 const formattedReply = parseMarkdownToHtml(data.reply);
                 const actionChips = (data.suggested_actions || []).map(act => 
-                    `<button onclick="sendQuickPrompt('${act}')" class="px-2 py-0.5 rounded-md bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-[10px]">${act}</button>`
+                    `<button onclick="handleActionClick('${act}')" class="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 text-[11px] font-medium transition-all active:scale-95">${act}</button>`
                 ).join(' ');
 
                 chatBox.innerHTML += `
                     <div class="bg-slate-900/90 border border-slate-800 text-slate-200 rounded-2xl p-3.5 space-y-2">
                         <div class="leading-relaxed font-sans">${formattedReply}</div>
-                        ${actionChips ? `<div class="pt-2 flex flex-wrap gap-1 border-t border-slate-800/60">${actionChips}</div>` : ''}
+                        ${actionChips ? `<div class="pt-2 flex flex-wrap gap-1.5 border-t border-slate-800/60">${actionChips}</div>` : ''}
                     </div>
                 `;
                 chatBox.scrollTop = chatBox.scrollHeight;
