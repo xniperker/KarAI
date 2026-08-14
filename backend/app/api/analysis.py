@@ -148,10 +148,13 @@ async def get_dataset_latest_results(
     items = []
     for a in anomalies:
         if a.transaction:
+            t_date = a.transaction.txn_date
+            if not t_date and a.transaction.raw_data:
+                t_date = str(a.transaction.raw_data.get("txn_date", ""))
             items.append({
                 "id": a.id,
                 "txn_id": a.transaction.transaction_id,
-                "txn_date": a.transaction.txn_date,
+                "txn_date": t_date or "N/A",
                 "amount": a.transaction.amount,
                 "party_name": a.transaction.party_name,
                 "gstin": a.transaction.gstin,
