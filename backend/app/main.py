@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.core.config import settings
 from app.db.session import engine, Base
-from app.api import auth, datasets, analysis, compliance, dashboard, reports
+from app.api import auth, datasets, analysis, compliance, dashboard, reports, copilot
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -31,6 +31,7 @@ app.include_router(analysis.router, prefix=settings.API_V1_STR)
 app.include_router(compliance.router, prefix=settings.API_V1_STR)
 app.include_router(dashboard.router, prefix=settings.API_V1_STR)
 app.include_router(reports.router, prefix=settings.API_V1_STR)
+app.include_router(copilot.router, prefix=settings.API_V1_STR)
 
 # Serve static dashboard UI
 static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")

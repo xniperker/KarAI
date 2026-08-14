@@ -42,7 +42,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased bg-glow-blue selection:bg-blue-600 selection:text-white">
+<body class="min-h-screen flex flex-col antialiased bg-glow-blue selection:bg-blue-600 selection:text-white pb-20">
 
     <!-- TOP NAV BAR -->
     <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
@@ -60,12 +60,13 @@
             </div>
 
             <div class="flex items-center space-x-4">
+                <button onclick="toggleCopilotDrawer()" class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-semibold transition-all">
+                    <i data-lucide="bot" class="w-4 h-4 text-purple-400"></i>
+                    <span>Ask Tax Co-Pilot AI</span>
+                </button>
                 <div class="flex items-center space-x-2 text-xs text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span>FastAPI Engine: <strong class="text-slate-200">Online</strong></span>
-                </div>
-                <div class="text-xs text-slate-400 border-l border-slate-800 pl-4">
-                    MAIT Delhi — <span class="text-slate-300 font-medium">CSE (Data Science)</span>
                 </div>
             </div>
         </div>
@@ -326,6 +327,61 @@
 
     </main>
 
+    <!-- FLOATING COPILOT AI BUTTON -->
+    <button onclick="toggleCopilotDrawer()" class="fixed bottom-6 right-6 z-50 inline-flex items-center space-x-2 px-5 py-3 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white font-bold text-sm shadow-2xl shadow-purple-500/40 hover:scale-105 active:scale-95 transition-all">
+        <i data-lucide="bot" class="w-5 h-5 animate-pulse"></i>
+        <span>KarAI Tax Co-Pilot AI</span>
+    </button>
+
+    <!-- GENAI TAX COPILOT DRAWER -->
+    <div id="copilotDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-slate-950/95 backdrop-blur-2xl border-l border-slate-800 shadow-2xl transition-transform duration-300 transform translate-x-full flex flex-col">
+        <!-- Drawer Header -->
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
+                    <i data-lucide="bot" class="w-5 h-5 text-purple-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-white">KarAI Tax Co-Pilot AI</h3>
+                    <p class="text-[10px] text-purple-400">Context-Aware Tax Advisory Engine</p>
+                </div>
+            </div>
+            <button onclick="toggleCopilotDrawer()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Chat History -->
+        <div id="copilotChatContainer" class="flex-1 overflow-y-auto p-5 space-y-4 text-xs">
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-2">
+                <p class="text-slate-200 leading-relaxed">
+                    👋 Namaste! I am your <strong>KarAI Tax Co-Pilot AI</strong>. Ask me anything about your GST compliance audit, legal tax regulations (CGST Act, Rule 36(4), Sec 40A(3)), or SHAP anomaly risk drivers.
+                </p>
+                <div class="pt-2 flex flex-wrap gap-2">
+                    <button onclick="sendQuickPrompt('Summarize my GST audit report')" class="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-[11px]">
+                        💡 Summarize Audit Report
+                    </button>
+                    <button onclick="sendQuickPrompt('How do I fix RULE-001 invalid GSTINs?')" class="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 text-[11px]">
+                        🔍 Explain RULE-001 (GSTIN)
+                    </button>
+                    <button onclick="sendQuickPrompt('Why are round amounts flagged under Sec 40A(3)?')" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-[11px]">
+                        💵 Explain RULE-004 (Cash Risk)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input Footer -->
+        <div class="p-4 border-t border-slate-800 bg-slate-900/40">
+            <form onsubmit="handleCopilotSubmit(event)" class="flex items-center space-x-2">
+                <input type="text" id="copilotInput" placeholder="Ask your tax question..." class="flex-1 bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-purple-500">
+                <button type="submit" class="p-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-all active:scale-95">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- SHAP EXPLAINER MODAL -->
     <div id="shapModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="glass-panel rounded-2xl max-w-xl w-full p-6 space-y-5 border border-slate-700 shadow-2xl relative">
@@ -374,10 +430,8 @@
         let jwtToken = "";
         let currentDatasetId = "";
 
-        // Pagination state
         let violCurrentPage = 1;
         let violTotalPages = 1;
-
         let anomCurrentPage = 1;
         let anomTotalPages = 1;
         let searchTimeout = null;
@@ -485,7 +539,6 @@
         async function refreshDashboard() {
             if(!currentDatasetId) return;
 
-            // 1. Fetch Summary for KPIs & Charts
             const resSummary = await fetch(`${API_BASE}/dashboard/summary?dataset_id=${currentDatasetId}`, {
                 headers: { "Authorization": `Bearer ${jwtToken}` }
             });
@@ -501,7 +554,6 @@
             else if(summary.overall_risk_level === "High") rLevelEl.className = "text-3xl font-extrabold text-amber-500";
             else rLevelEl.className = "text-3xl font-extrabold text-emerald-400";
 
-            // Scatter & Pie Charts
             const resScatter = await fetch(`${API_BASE}/dashboard/scatter?dataset_id=${currentDatasetId}`, {
                 headers: { "Authorization": `Bearer ${jwtToken}` }
             });
@@ -509,10 +561,7 @@
             renderScatterPlot(scatterPoints);
             renderPieChart(summary.risk_distribution);
 
-            // 2. Load Paginated Violations & Summaries
             await loadViolationsPage(1);
-
-            // 3. Load Paginated Transaction Ledger
             await loadAnomaliesPage(1);
         }
 
@@ -526,7 +575,6 @@
             });
             const compSummary = await res.json();
 
-            // Render Aggregation Rule Cards
             const ruleCardsEl = document.getElementById("ruleAggCards");
             if(compSummary.rule_summaries && compSummary.rule_summaries.length > 0) {
                 ruleCardsEl.innerHTML = compSummary.rule_summaries.map(r => {
@@ -548,7 +596,6 @@
                 ruleCardsEl.innerHTML = `<div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-medium text-center md:col-span-3">✓ Zero GST Compliance Violations Detected</div>`;
             }
 
-            // Render Detailed Violations Table
             document.getElementById("violTotalCount").innerText = compSummary.total.toLocaleString();
             const vTable = document.getElementById("violationsTableBody");
             if(compSummary.items && compSummary.items.length > 0) {
@@ -569,7 +616,6 @@
                 vTable.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No violations match current filter.</td></tr>`;
             }
 
-            // Pagination Controls
             violTotalPages = compSummary.pages || 1;
             document.getElementById("violPaginationInfo").innerText = `Page ${compSummary.page} of ${violTotalPages} (${compSummary.total} total items)`;
             document.getElementById("violPrevBtn").disabled = compSummary.page <= 1;
@@ -777,6 +823,83 @@
 
             } catch(e) {
                 alert("Error generating report: " + e.message);
+            }
+        }
+
+        // GenAI Tax Co-Pilot Drawer Logic
+        function toggleCopilotDrawer() {
+            const drawer = document.getElementById("copilotDrawer");
+            if(drawer.classList.contains("translate-x-full")) {
+                drawer.classList.remove("translate-x-full");
+            } else {
+                drawer.classList.add("translate-x-full");
+            }
+        }
+
+        async function sendQuickPrompt(promptText) {
+            document.getElementById("copilotInput").value = promptText;
+            handleCopilotSubmit(new Event('submit'));
+        }
+
+        async function handleCopilotSubmit(e) {
+            if(e) e.preventDefault();
+            const inputEl = document.getElementById("copilotInput");
+            const text = inputEl.value.trim();
+            if(!text) return;
+
+            inputEl.value = "";
+            const chatBox = document.getElementById("copilotChatContainer");
+
+            // User Message
+            chatBox.innerHTML += `
+                <div class="flex justify-end">
+                    <div class="bg-purple-600/30 border border-purple-500/40 text-purple-100 rounded-2xl px-3.5 py-2.5 max-w-[85%]">
+                        ${text}
+                    </div>
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Loading indicator
+            const loadingId = "load_" + Date.now();
+            chatBox.innerHTML += `
+                <div id="${loadingId}" class="flex items-center space-x-2 text-slate-400 italic">
+                    <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-purple-400"></i>
+                    <span>KarAI Co-Pilot is reasoning...</span>
+                </div>
+            `;
+            lucide.createIcons();
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const res = await fetch(`${API_BASE}/copilot/chat`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({ message: text, dataset_id: currentDatasetId })
+                });
+                const data = await res.json();
+
+                document.getElementById(loadingId).remove();
+
+                const formattedReply = data.reply.replace(/\n/g, '<br/>');
+                const actionChips = (data.suggested_actions || []).map(act => 
+                    `<button onclick="sendQuickPrompt('${act}')" class="px-2 py-0.5 rounded-md bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-[10px]">${act}</button>`
+                ).join(' ');
+
+                chatBox.innerHTML += `
+                    <div class="bg-slate-900/90 border border-slate-800 text-slate-200 rounded-2xl p-3.5 space-y-2">
+                        <div class="leading-relaxed font-sans">${formattedReply}</div>
+                        ${actionChips ? `<div class="pt-2 flex flex-wrap gap-1 border-t border-slate-800/60">${actionChips}</div>` : ''}
+                    </div>
+                `;
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+            } catch(err) {
+                document.getElementById(loadingId).remove();
+                chatBox.innerHTML += `<div class="text-red-400 italic">Error connecting to Co-Pilot AI: ${err.message}</div>`;
             }
         }
 
