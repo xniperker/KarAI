@@ -87,33 +87,30 @@
                     </p>
                 </div>
                 
-                <div class="flex flex-wrap items-center gap-3">
-                    <!-- Primary Pipeline Actions -->
-                    <div class="flex items-center gap-2">
-                        <button id="loadSampleBtn" onclick="loadSampleDataset()" class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition-all shadow-lg shadow-blue-600/25 active:scale-95">
-                            <i data-lucide="play" class="w-4 h-4"></i>
-                            <span>Run Demo (1,000 Txns)</span>
-                        </button>
-                        
-                        <label class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm border border-slate-700 cursor-pointer transition-all active:scale-95">
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <!-- Run Demo Button -->
+                    <button id="loadSampleBtn" onclick="loadSampleDataset()" class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs sm:text-sm transition-all shadow-lg shadow-blue-600/25 active:scale-95">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        <span>Run Demo (1,000 Txns)</span>
+                    </button>
+                    
+                    <!-- Upload Custom CSV + Question Mark Help Icon (Unified Pill) -->
+                    <div class="inline-flex items-center rounded-xl bg-slate-800/90 border border-slate-700/80 p-0.5 shadow-sm">
+                        <label class="inline-flex items-center space-x-2 px-3.5 py-2 text-slate-200 font-medium text-xs sm:text-sm cursor-pointer hover:text-white transition-colors">
                             <i data-lucide="upload-cloud" class="w-4 h-4 text-blue-400"></i>
                             <span>Upload Custom CSV</span>
                             <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="uploadCustomCSV(this.files[0])">
                         </label>
-                    </div>
-
-                    <!-- CSV Helper Tools -->
-                    <div class="flex items-center gap-2 border-l border-slate-800 pl-3">
-                        <button onclick="downloadSampleTemplateCSV()" class="inline-flex items-center space-x-2 px-3 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 font-medium text-xs border border-slate-800 transition-all active:scale-95">
-                            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
-                            <span>CSV Template</span>
-                        </button>
-
-                        <button onclick="openCsvGuideModal()" class="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 font-medium text-xs border border-slate-800 transition-all active:scale-95">
-                            <i data-lucide="help-circle" class="w-3.5 h-3.5 text-amber-400"></i>
-                            <span>Format Spec</span>
+                        <button onclick="openCsvGuideModal()" class="p-2 text-slate-400 hover:text-amber-400 border-l border-slate-700/80 transition-colors" title="View CSV Format Guide">
+                            <i data-lucide="help-circle" class="w-4 h-4"></i>
                         </button>
                     </div>
+
+                    <!-- Download CSV Template Button -->
+                    <button onclick="downloadSampleTemplateCSV()" class="inline-flex items-center space-x-2 px-3.5 py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white font-medium text-xs sm:text-sm border border-slate-800 transition-all active:scale-95" title="Download Starter Template">
+                        <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Template CSV</span>
+                    </button>
                 </div>
             </div>
         </section>
