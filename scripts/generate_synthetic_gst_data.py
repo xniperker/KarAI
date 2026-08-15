@@ -19,7 +19,6 @@ def generate_synthetic_gst_dataset(num_records=1000, seed=42):
     categories = ["HSN 8471", "HSN 7208", "HSN 5208", "HSN 2710", "SAC 9983", "SAC 9965", "HSN 4819"]
     
     start_date = datetime(2025, 1, 1)
-    
     records = []
     
     party_gstin_map = {}
@@ -58,7 +57,6 @@ def generate_synthetic_gst_dataset(num_records=1000, seed=42):
         
     df = pd.DataFrame(records)
     
-    # Explicitly seed all 6 rule violations to ensure RULE-001 through RULE-006 trigger cleanly
     rule_types = [
         "invalid_gstin",           # RULE-001
         "duplicate_invoice",       # RULE-002
@@ -105,10 +103,10 @@ if __name__ == "__main__":
     import os
     os.makedirs("/Users/xniperker/Vault/KarAI/datasets", exist_ok=True)
     
-    df_500 = generate_synthetic_gst_dataset(num_records=500, seed=42)
-    df_500.to_csv("/Users/xniperker/Vault/KarAI/datasets/sample_gst_transactions_500.csv", index=False)
-    print("Generated datasets/sample_gst_transactions_500.csv with ground truth labels for RULE-001..RULE-006.")
+    df_1000 = generate_synthetic_gst_dataset(num_records=1000, seed=42)
+    df_1000.to_csv("/Users/xniperker/Vault/KarAI/datasets/sample_gst_transactions_1000.csv", index=False)
+    print("Generated datasets/sample_gst_transactions_1000.csv with 1,000 records & seeded rules 1-6.")
     
     df_2000 = generate_synthetic_gst_dataset(num_records=2000, seed=101)
     df_2000.to_csv("/Users/xniperker/Vault/KarAI/datasets/sample_gst_transactions_2000.csv", index=False)
-    print("Generated datasets/sample_gst_transactions_2000.csv with ground truth labels for RULE-001..RULE-006.")
+    print("Generated datasets/sample_gst_transactions_2000.csv with 2,000 records.")
