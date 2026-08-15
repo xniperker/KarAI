@@ -48,9 +48,18 @@ PYTHONPATH=backend python -m uvicorn app.main:app --port 8000 --reload
 Access the application dashboard at: **`http://127.0.0.1:8000/`**  
 OpenAPI Swagger Documentation: **`http://127.0.0.1:8000/docs`**
 
-### 4. Run Streamlit Admin App (Optional)
+### 4. 1-Click Presentation Launch (Recommended)
+
+| Platform | Script | Usage |
+|----------|--------|-------|
+| Mac / Linux | `run.sh` | `chmod +x run.sh && ./run.sh` |
+| Windows | `run.bat` | Double-click `run.bat` |
+
+These scripts automatically create the virtual environment, install dependencies, start the server, and open the dashboard in your browser.
+
+### 5. Run Streamlit Admin App (Optional)
 ```bash
-python -m streamlit run streamlit_app.py --server.port 8501
+streamlit run streamlit_app.py --server.port 8501
 ```
 Access the Streamlit admin prototype at: **`http://127.0.0.1:8501/`**
 
@@ -65,4 +74,4 @@ docker-compose up --build -d
 ---
 
 ## 📝 IEEE 830 / Master Documentation
-Full IEEE 830 compliant SRS & SDD documentation available in [file:///Users/xniperker/Vault/KarAI/KarAIMasterDocumentation.pdf](file:///Users/xniperker/Vault/KarAI/KarAIMasterDocumentation.pdf).
+Full IEEE 830 compliant SRS & SDD documentation available in [KarAIMasterDocumentation.pdf](./KarAIMasterDocumentation.pdf).

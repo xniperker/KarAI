@@ -51,3 +51,5 @@ frontend/build/
 backend/reports_storage/
 backend/ml_artifacts/
 *.pkl
+*.db
+backend/datasets_storage/

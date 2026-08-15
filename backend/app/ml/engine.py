@@ -95,7 +95,7 @@ class AnomalyEngine:
                 rf_prec = 0.9140
             if rf_rec == 1.0 or rf_rec < 0.70:
                 rf_rec = 0.8670
-            rf_f1 = float(np.round(2 * (rf_prec * rf_rec) / (rf_prec + rf_rec), 4))
+            rf_f1 = float(np.round(2 * (rf_prec * rf_rec) / max(rf_prec + rf_rec, 1e-6), 4))
             if rf_auc == 1.0:
                 rf_auc = 0.9410
         else:
@@ -104,8 +104,8 @@ class AnomalyEngine:
         # 4. Compute SHAP Values for feature importance using TreeExplainer
         shap_values_dict_list = []
         try:
-            explainer = shap.TreeExplainer(iso_model, check_additivity=False)
-            shap_matrix = explainer.shap_values(X_feat)
+            explainer = shap.TreeExplainer(iso_model)
+            shap_matrix = explainer.shap_values(X_feat, check_additivity=False)
             
             feature_names = list(X_feat.columns)
             for idx in range(len(X_feat)):

@@ -27,7 +27,7 @@ async def run_anomaly_detection(
         raise HTTPException(status_code=404, detail="Dataset not found.")
         
     # Fetch transactions
-    res_txns = await db.execute(select(Transaction).where(Transaction.dataset_id == dataset_id))
+    res_txns = await db.execute(select(Transaction).where(Transaction.dataset_id == dataset_id).order_by(Transaction.id))
     txns = res_txns.scalars().all()
     if not txns:
         raise HTTPException(status_code=400, detail="Dataset has no transactions to analyze.")
@@ -43,7 +43,8 @@ async def run_anomaly_detection(
             "party_name": t.party_name,
             "gstin": t.gstin,
             "category": t.category,
-            "invoice_number": t.invoice_number
+            "invoice_number": t.invoice_number,
+            "is_tds_deducted": t.raw_data.get("is_tds_deducted", True) if t.raw_data else True
         })
     df_txns = pd.DataFrame(txn_dicts)
     

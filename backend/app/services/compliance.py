@@ -10,7 +10,7 @@ class ComplianceValidator:
     - RULE-001: GSTIN Standard Format (CGST Sec 25)
     - RULE-002: Duplicate Invoice Flag (CGST Rule 36(4))
     - RULE-003: HSN/SAC Code Missing > ₹50,000 (Notif 78/2020)
-    - RULE-004: Cash Payment Risk > ₹10,000 (IT Act Sec 40A(3))
+    - RULE-004: Cash Payment Risk >= ₹1,00,000 (IT Act Sec 40A(3))
     - RULE-005: Missing TDS Deduction (IT Act Sec 194C/194J)
     - RULE-006: High-Value Cash Transaction > ₹2,00,000 (IT Act Sec 269ST)
     """
@@ -85,7 +85,8 @@ class ComplianceValidator:
                 })
 
             # RULE-005: Income Tax Sec 194C/194J Missing TDS Deduction
-            if amount > 30000.0 and ("NO TDS" in category.upper() or is_tds is False or is_tds == "False" or is_tds == 0):
+            tds_missing = str(is_tds).strip().lower() in ("false", "0", "no", "n") or is_tds is False or is_tds == 0
+            if amount > 30000.0 and ("NO TDS" in category.upper() or tds_missing):
                 major_count += 1
                 violations.append({
                     "transaction_id": txn_id,

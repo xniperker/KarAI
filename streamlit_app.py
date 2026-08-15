@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import plotly.graph_objects as bg
+import plotly.graph_objects as go
 import os
 import sys
 
@@ -32,7 +32,7 @@ uploaded_file = st.sidebar.file_uploader("Upload Transaction CSV", type=["csv"])
 
 if uploaded_file is None:
     # Use synthetic sample file
-    sample_path = "datasets/sample_gst_transactions_500.csv"
+    sample_path = "datasets/sample_gst_transactions_1000.csv"
     if os.path.exists(sample_path):
         df = pd.read_csv(sample_path)
         st.info("Loaded default synthetic GST ledger (500 transactions). Upload your CSV in the sidebar to test custom datasets.")

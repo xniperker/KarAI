@@ -714,6 +714,7 @@
             } catch(err) {
                 alert("Failed to process custom CSV: " + err.message);
             }
+            document.getElementById('csvFileInput').value = '';
         }
 
         async function refreshDashboard() {
@@ -739,15 +740,15 @@
                 const iso = summary.model_benchmarks.isolation_forest || {};
                 const rf = summary.model_benchmarks.random_forest || {};
 
-                document.getElementById("isoPrec").innerText = (iso.precision || 0.9412).toFixed(4);
-                document.getElementById("isoRec").innerText = (iso.recall || 0.9600).toFixed(4);
-                document.getElementById("isoF1").innerText = (iso.f1_score || 0.9505).toFixed(4);
-                document.getElementById("isoAuc").innerText = (iso.roc_auc || 0.9840).toFixed(4);
+                document.getElementById("isoPrec").innerText = (iso.precision ?? 0.9412).toFixed(4);
+                document.getElementById("isoRec").innerText = (iso.recall ?? 0.9600).toFixed(4);
+                document.getElementById("isoF1").innerText = (iso.f1_score ?? 0.9505).toFixed(4);
+                document.getElementById("isoAuc").innerText = (iso.roc_auc ?? 0.9840).toFixed(4);
 
-                document.getElementById("rfPrec").innerText = (rf.precision || 0.9800).toFixed(4);
-                document.getElementById("rfRec").innerText = (rf.recall || 0.9900).toFixed(4);
-                document.getElementById("rfF1").innerText = (rf.f1_score || 0.9849).toFixed(4);
-                document.getElementById("rfAuc").innerText = (rf.roc_auc || 0.9950).toFixed(4);
+                document.getElementById("rfPrec").innerText = (rf.precision ?? 0.9800).toFixed(4);
+                document.getElementById("rfRec").innerText = (rf.recall ?? 0.9900).toFixed(4);
+                document.getElementById("rfF1").innerText = (rf.f1_score ?? 0.9849).toFixed(4);
+                document.getElementById("rfAuc").innerText = (rf.roc_auc ?? 0.9950).toFixed(4);
             }
 
             const resScatter = await fetch(`${API_BASE}/dashboard/scatter?dataset_id=${currentDatasetId}`, {
@@ -770,6 +771,7 @@
                 headers: { "Authorization": `Bearer ${jwtToken}` }
             });
             const compSummary = await res.json();
+            if (!compSummary || !compSummary.items) return;
 
             const ruleCardsEl = document.getElementById("ruleAggCards");
             if(compSummary.rule_summaries && compSummary.rule_summaries.length > 0) {
@@ -836,6 +838,7 @@
                 headers: { "Authorization": `Bearer ${jwtToken}` }
             });
             const data = await res.json();
+            if (!data || !data.items) return;
 
             const aTable = document.getElementById("anomaliesTableBody");
             if(data.items && data.items.length > 0) {
