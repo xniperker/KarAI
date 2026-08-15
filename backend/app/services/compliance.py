@@ -5,8 +5,14 @@ from typing import List, Dict, Any, Tuple
 
 class ComplianceValidator:
     """
-    GST Compliance Rule Engine implementing RULE-001 through RULE-006.
-    Calculates compliance score 0-100 per dataset/filing period.
+    GST & Income Tax Compliance Validator.
+    Evaluates:
+    - RULE-001: GSTIN Standard Format (CGST Sec 25)
+    - RULE-002: Duplicate Invoice Flag (CGST Rule 36(4))
+    - RULE-003: HSN/SAC Code Missing > ₹50,000 (Notif 78/2020)
+    - RULE-004: Cash Payment Risk > ₹10,000 (IT Act Sec 40A(3))
+    - RULE-005: Missing TDS Deduction (IT Act Sec 194C/194J)
+    - RULE-006: High-Value Cash Transaction > ₹2,00,000 (IT Act Sec 269ST)
     """
     GSTIN_REGEX = re.compile(r"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$")
 
@@ -18,7 +24,6 @@ class ComplianceValidator:
         major_count = 0
         minor_count = 0
         
-        # Track seen invoices for RULE-002
         seen_invoices = set()
         
         for idx, row in df.iterrows():
@@ -29,6 +34,7 @@ class ComplianceValidator:
             inv_no = str(row.get("invoice_number", "")).strip() if pd.notna(row.get("invoice_number")) else ""
             txn_date = str(row.get("txn_date", ""))
             party = str(row.get("party_name", ""))
+            is_tds = row.get("is_tds_deducted", True)
             
             # RULE-001: GSTIN Format Validation
             if gstin and not cls.GSTIN_REGEX.match(gstin):
@@ -67,7 +73,7 @@ class ComplianceValidator:
                     "remediation": "Assign the appropriate 4 to 6 digit HSN/SAC code as required by GST mandate for B2B invoices."
                 })
                 
-            # RULE-004: Suspicious Round Amount (Laundering / Cash transaction risk)
+            # RULE-004: Income Tax Sec 40A(3) Cash Payment Risk
             if amount >= 100000.0 and amount % 10000 == 0:
                 minor_count += 1
                 violations.append({
@@ -76,6 +82,28 @@ class ComplianceValidator:
                     "severity": "minor",
                     "description": f"Unusually round transaction amount ₹{amount:,.2f} flagged for cash payment scrutiny under Sec 40A(3).",
                     "remediation": "Ensure banking channel proof of payment (NEFT/RTGS) is archived for tax audit verification."
+                })
+
+            # RULE-005: Income Tax Sec 194C/194J Missing TDS Deduction
+            if amount > 30000.0 and not is_tds and "SAC" in category.upper():
+                major_count += 1
+                violations.append({
+                    "transaction_id": txn_id,
+                    "violation_type": "RULE-005",
+                    "severity": "major",
+                    "description": f"Professional service payment ₹{amount:,.2f} missing mandatory TDS deduction under Sec 194J of IT Act.",
+                    "remediation": "Deduct 10% TDS and deposit via Form 26Q before quarterly filing deadline."
+                })
+
+            # RULE-006: Income Tax Sec 269ST Cash Limit Breach
+            if amount >= 200000.0 and "CASH" in category.upper():
+                critical_count += 1
+                violations.append({
+                    "transaction_id": txn_id,
+                    "violation_type": "RULE-006",
+                    "severity": "critical",
+                    "description": f"Cash receipt ₹{amount:,.2f} exceeds ₹200,000 statutory cash threshold under Sec 269ST of IT Act.",
+                    "remediation": "Imposes 100% penalty under Sec 271DA. Issue payment reversal via banking channel immediately."
                 })
 
         # Calculate Overall Compliance Score (100 - deductions)

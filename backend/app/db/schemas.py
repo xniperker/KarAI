@@ -122,6 +122,7 @@ class DashboardSummary(BaseModel):
     risk_distribution: Dict[str, int]
     top_anomalies: List[Dict[str, Any]]
     recent_violations: List[Dict[str, Any]]
+    model_benchmarks: Optional[Dict[str, Any]] = None
 
 # Report Schemas
 class ReportOut(BaseModel):

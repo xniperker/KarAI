@@ -17,7 +17,6 @@ async def get_dashboard_summary(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    # Determine target dataset
     if not dataset_id:
         ds_res = await db.execute(
             select(Dataset)
@@ -33,17 +32,16 @@ async def get_dashboard_summary(
                 overall_risk_level="Low",
                 risk_distribution={"normal": 0, "suspicious": 0, "high_risk": 0, "critical": 0},
                 top_anomalies=[],
-                recent_violations=[]
+                recent_violations=[],
+                model_benchmarks=None
             )
         dataset_id = latest_ds.id
 
-    # Total Transactions
     t_count_res = await db.execute(
         select(func.count(Transaction.id)).where(Transaction.dataset_id == dataset_id)
     )
     total_txns = t_count_res.scalar() or 0
 
-    # Latest Compliance Check
     cc_res = await db.execute(
         select(ComplianceCheck)
         .options(selectinload(ComplianceCheck.violations))
@@ -62,7 +60,6 @@ async def get_dashboard_summary(
                 "remediation": v.remediation
             })
 
-    # Latest Model Run Anomaly Results
     mr_res = await db.execute(
         select(ModelRun)
         .where(ModelRun.dataset_id == dataset_id, ModelRun.status == "completed")
@@ -73,8 +70,10 @@ async def get_dashboard_summary(
     risk_dist = {"normal": 0, "suspicious": 0, "high_risk": 0, "critical": 0}
     flagged_count = 0
     top_anomalies = []
+    benchmarks = None
 
     if latest_mr:
+        benchmarks = latest_mr.metrics or {}
         anom_res = await db.execute(
             select(AnomalyResult)
             .options(selectinload(AnomalyResult.transaction))
@@ -101,7 +100,6 @@ async def get_dashboard_summary(
                     "shap_values": a.shap_values or {}
                 })
 
-    # Determine Overall Risk Level
     crit = risk_dist.get("critical", 0)
     high = risk_dist.get("high_risk", 0)
     if crit > 5 or comp_score < 60:
@@ -120,7 +118,8 @@ async def get_dashboard_summary(
         overall_risk_level=overall_risk,
         risk_distribution=risk_dist,
         top_anomalies=top_anomalies,
-        recent_violations=violations_list
+        recent_violations=violations_list,
+        model_benchmarks=benchmarks
     )
 
 @router.get("/scatter")
