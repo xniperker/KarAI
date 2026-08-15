@@ -7,7 +7,6 @@ def generate_synthetic_gst_dataset(num_records=1000, seed=42):
     np.random.seed(seed)
     random.seed(seed)
     
-    # Common Indian SME vendors / parties
     parties = [
         "Tata Consultancy Services Ltd", "Reliance Industries Ltd", "Infosys Limited",
         "Sharma Logistics & Freight", "Gupta Steel & Hardware Corp", "Verma Stationery Traders",
@@ -16,7 +15,6 @@ def generate_synthetic_gst_dataset(num_records=1000, seed=42):
         "Apex Packaging Solutions", "Bharat Petroleum Dealer", "Chawla IT Services"
     ]
     
-    # Valid Indian GSTIN format
     valid_gstin_prefixes = ["07AAAAA", "27BBBBB", "09CCCCC", "19DDDDD", "33EEEEE"]
     categories = ["HSN 8471", "HSN 7208", "HSN 5208", "HSN 2710", "SAC 9983", "SAC 9965", "HSN 4819"]
     
@@ -43,7 +41,6 @@ def generate_synthetic_gst_dataset(num_records=1000, seed=42):
         category = random.choice(categories)
         invoice_no = f"INV/2025/{random.randint(10000, 99999)}"
         
-        # Log-normal distribution for amounts
         base_amount = float(np.round(np.random.lognormal(mean=9.5, sigma=0.8), 2))
         amount = max(1000.0, min(base_amount, 250000.0))
         
@@ -56,26 +53,28 @@ def generate_synthetic_gst_dataset(num_records=1000, seed=42):
             "category": category,
             "invoice_number": invoice_no,
             "is_tds_deducted": True,
-            "is_anomaly": 0  # Default normal
+            "is_anomaly": 0
         })
         
     df = pd.DataFrame(records)
     
-    # Inject 5% anomalies (GST & Income Tax specific violations)
-    anomaly_indices = random.sample(range(num_records), int(num_records * 0.05))
+    # Explicitly seed all 6 rule violations to ensure RULE-001 through RULE-006 trigger cleanly
+    rule_types = [
+        "invalid_gstin",           # RULE-001
+        "duplicate_invoice",       # RULE-002
+        "missing_hsn_large_b2b",    # RULE-003
+        "round_amount_laundering", # RULE-004
+        "missing_tds_sec194",      # RULE-005
+        "cash_sec269st"            # RULE-006
+    ]
     
-    for idx in anomaly_indices:
-        anomaly_type = random.choice([
-            "huge_amount_spike", "invalid_gstin", "duplicate_invoice", 
-            "round_amount_laundering", "missing_hsn_large_b2b", "missing_tds_sec194", "cash_sec269st"
-        ])
+    anomaly_indices = random.sample(range(num_records), int(num_records * 0.06))
+    
+    for idx_pos, idx in enumerate(anomaly_indices):
+        anomaly_type = rule_types[idx_pos % len(rule_types)]
+        df.at[idx, "is_anomaly"] = 1
         
-        df.at[idx, "is_anomaly"] = 1  # Ground-truth anomaly label
-        
-        if anomaly_type == "huge_amount_spike":
-            df.at[idx, "amount"] = float(np.round(df.at[idx, "amount"] * random.uniform(15.0, 30.0), 2))
-            
-        elif anomaly_type == "invalid_gstin":
+        if anomaly_type == "invalid_gstin":
             df.at[idx, "gstin"] = "07INVALIDGSTIN12"
             
         elif anomaly_type == "duplicate_invoice":
@@ -84,18 +83,18 @@ def generate_synthetic_gst_dataset(num_records=1000, seed=42):
             df.at[idx, "gstin"] = df.at[target_idx, "gstin"]
             df.at[idx, "txn_date"] = df.at[target_idx, "txn_date"]
             
-        elif anomaly_type == "round_amount_laundering":
-            df.at[idx, "amount"] = float(random.choice([500000.0, 1000000.0, 1500000.0]))
-            
         elif anomaly_type == "missing_hsn_large_b2b":
             df.at[idx, "amount"] = 185000.0
             df.at[idx, "category"] = "UNCLASSIFIED"
-
+            
+        elif anomaly_type == "round_amount_laundering":
+            df.at[idx, "amount"] = float(random.choice([500000.0, 1000000.0, 1500000.0]))
+            
         elif anomaly_type == "missing_tds_sec194":
             df.at[idx, "amount"] = 120000.0
-            df.at[idx, "category"] = "SAC 9983"
-            df.at[idx, "is_tds_deducted"] = False  # Income Tax Sec 194J breach
-
+            df.at[idx, "category"] = "SAC 9983 (NO TDS)"
+            df.at[idx, "is_tds_deducted"] = False
+            
         elif anomaly_type == "cash_sec269st":
             df.at[idx, "amount"] = 250000.0
             df.at[idx, "category"] = "CASH PAYMENT"
@@ -108,8 +107,8 @@ if __name__ == "__main__":
     
     df_500 = generate_synthetic_gst_dataset(num_records=500, seed=42)
     df_500.to_csv("/Users/xniperker/Vault/KarAI/datasets/sample_gst_transactions_500.csv", index=False)
-    print("Generated datasets/sample_gst_transactions_500.csv with ground truth labels.")
+    print("Generated datasets/sample_gst_transactions_500.csv with ground truth labels for RULE-001..RULE-006.")
     
     df_2000 = generate_synthetic_gst_dataset(num_records=2000, seed=101)
     df_2000.to_csv("/Users/xniperker/Vault/KarAI/datasets/sample_gst_transactions_2000.csv", index=False)
-    print("Generated datasets/sample_gst_transactions_2000.csv with ground truth labels.")
+    print("Generated datasets/sample_gst_transactions_2000.csv with ground truth labels for RULE-001..RULE-006.")

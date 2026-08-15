@@ -73,7 +73,7 @@ class ComplianceValidator:
                     "remediation": "Assign the appropriate 4 to 6 digit HSN/SAC code as required by GST mandate for B2B invoices."
                 })
                 
-            # RULE-004: Income Tax Sec 40A(3) Cash Payment Risk
+            # RULE-004: Income Tax Sec 40A(3) Cash Payment Scrutiny
             if amount >= 100000.0 and amount % 10000 == 0:
                 minor_count += 1
                 violations.append({
@@ -85,7 +85,7 @@ class ComplianceValidator:
                 })
 
             # RULE-005: Income Tax Sec 194C/194J Missing TDS Deduction
-            if amount > 30000.0 and not is_tds and "SAC" in category.upper():
+            if amount > 30000.0 and ("NO TDS" in category.upper() or is_tds is False or is_tds == "False" or is_tds == 0):
                 major_count += 1
                 violations.append({
                     "transaction_id": txn_id,
@@ -106,9 +106,10 @@ class ComplianceValidator:
                     "remediation": "Imposes 100% penalty under Sec 271DA. Issue payment reversal via banking channel immediately."
                 })
 
-        # Calculate Overall Compliance Score (100 - deductions)
-        deduction = (critical_count * 10) + (major_count * 5) + (minor_count * 2)
-        score = max(0.0, float(np.round(100.0 - deduction, 2)))
+        # Calculate Overall Compliance Score (Proportional normalization per dataset size)
+        total_rows = max(1, len(df))
+        weighted_violation_rate = ((critical_count * 5.0) + (major_count * 2.5) + (minor_count * 1.0)) / total_rows
+        score = max(0.0, min(100.0, float(np.round(100.0 - (weighted_violation_rate * 100.0), 1))))
         
         summary_counts = {
             "total_violations": len(violations),
