@@ -18,8 +18,8 @@
 - **Core Backend Framework:** Python 3.12, FastAPI, Uvicorn, Pydantic v2
 - **Machine Learning Engine:** Scikit-learn (Isolation Forest), SHAP TreeExplainer, Pandas, NumPy, SciPy
 - **GST Compliance Engine:** Rule-based validation (GSTIN Regex, Duplicate Invoices, HSN Thresholds, Cash Laundering Flags)
-- **Database & Persistence:** Async SQLAlchemy 2.0 + SQLite (`aiosqlite`) / PostgreSQL (`asyncpg`)
-- **Authentication & Security:** JWT (HS256/python-jose), Bcrypt password hashing, Fernet (AES-256) data encryption
+- **Database & Persistence:** Async SQLAlchemy 2.0 + SQLite (`aiosqlite`)
+- **Authentication & Security:** JWT (HS256 via PyJWT), Bcrypt password hashing, Fernet (AES-256) data encryption
 - **Audit Export Modules:** ReportLab (PDF Audit Reports) & openpyxl (Excel Ledgers)
 - **User Interfaces:**
   1. **Primary Web SPA (`http://127.0.0.1:8000/`)**: Dynamic glassmorphism dark-mode dashboard with interactive Plotly scatter plots, SHAP waterfall modals, and 1-click PDF export.
