@@ -58,3 +58,4 @@ backend/datasets_storage/
 *Defense_Guide*
 *Defense_Handbook*
 defence/
+scripts/generate_synopsis_docx.py
