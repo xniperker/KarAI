@@ -54,6 +54,7 @@ backend/ml_artifacts/
 *.db
 backend/datasets_storage/
 
-# Local Defense Guides (Do not push to GitHub)
+# Local Defense Guides & Presentations (Do not push to GitHub)
 *Defense_Guide*
 *Defense_Handbook*
+defence/
