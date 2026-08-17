@@ -60,3 +60,4 @@ backend/datasets_storage/
 defence/
 scripts/generate_synopsis_docx.py
 scripts/generate_ppt.py
+scripts/generate_annexure_b.py
